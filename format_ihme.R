@@ -93,6 +93,12 @@ names(ihme) <- tolower(names(ihme))
 # Remove slashes
 names(ihme) <- gsub('/', '_', names(ihme), fixed = TRUE)
 
+# Remove dashes
+names(ihme) <- gsub('-', '_', names(ihme), fixed = TRUE)
+
+# Remove pluses
+names(ihme) <- gsub('+', '_plus_', names(ihme), fixed = TRUE)
+
 # Remove trailing underscore
 names(ihme) <- sub("_$","",names(ihme))
 
@@ -101,6 +107,14 @@ names(ihme) <- paste0('ihme_', names(ihme))
 
 # Get the country linkage name
 ihme$country <- ihme$ihme_location_name
+
+# Remove all incidence related variables
+ihme <- ihme[,!grepl('incidence', names(ihme))]
+
+# Reshape age groups to match WHO age groups
+# ....
+
+# Get linkage variables
 linkage <- read_csv('data/ISO_Country_Link.csv')
 ihme <- left_join(ihme,
                 linkage %>%

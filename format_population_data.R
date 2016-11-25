@@ -38,4 +38,30 @@ for (i in 1:nrow(results)){
 
 # Overwrite
 population <- results; rm(results)
+
+
+# Remove spaces in column names
+names(population) <- gsub(' ', '', names(population))
+
+# Make all names lowercase
+names(population) <- tolower(names(population))
+
+# Remove slashes
+names(population) <- gsub('/', '_', names(population), fixed = TRUE)
+
+# Remove trailing underscore
+names(population) <- sub("_$","",names(population))
+
+# Prepend with pop
+names(population[2:ncol(population)]) <- 
+  paste0('pop_', names(population)[2:ncol(population)])
+
+# Remove dashes
+names(population) <- gsub('-', '_', names(population), fixed = TRUE)
+
+# Remove pluses
+names(population) <- gsub('+', '_plus_', names(population), fixed = TRUE)
+
+
+# Remove the junk
 rm(a, age_group_names, i, s, sex_names, this_location, x)
