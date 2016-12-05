@@ -15,6 +15,7 @@ ihme <- read_csv('data/IHME DATASET 24112016.csv')
 
 # Get the individual values on which we're spreading the data
 location_names <- unique(ihme$location_name)
+location_ids <- unique(ihme$location_id)
 
 measure_names <- unique(ihme$measure_name)
 sex_names <- unique(ihme$sex_name)
@@ -24,7 +25,8 @@ metric_names <- unique(ihme$metric_name)
 years <- unique(ihme$year)
 
 # Create new dataframe
-wide <- data.frame(location_name = location_names)
+wide <- data.frame(location_name = location_names,
+                   location_id = location_ids)
 
 for(measure_name in measure_names){
   for(sex_name in sex_names){
@@ -105,24 +107,26 @@ names(ihme) <- sub("_$","",names(ihme))
 # Prepend with ihme
 names(ihme) <- paste0('ihme_', names(ihme))
 
-# Get the country linkage name
-ihme$country <- ihme$ihme_location_name
+# # Get the country linkage name
+# ihme$country <- ihme$ihme_location_name
 
 # Remove all incidence related variables
 ihme <- ihme[,!grepl('incidence', names(ihme))]
 
+ihme$country_number <- ihme$ihme_location_id
+
 # Reshape age groups to match WHO age groups
 # ....
 
-# Get linkage variables
-linkage <- read_csv('data/ISO_Country_Link.csv')
-ihme <- left_join(ihme,
-                linkage %>%
-                  rename(country = `COUNTRY NAME`),
-                by = 'country')
+# # Get linkage variables
+# linkage <- read_csv('data/ISO_Country_Link.csv')
+# ihme <- left_join(ihme,
+#                 linkage %>%
+#                   rename(country = `COUNTRY NAME`),
+#                 by = 'country')
 
 # Reorder column names
-ihme <- ihme[,unique(c('country', 'iso3', 'country_number', names(ihme)))]
+# ihme <- ihme[,unique(c('country_number', names(ihme)))]
 
 # Remove all the excess junk
 z <- unlist(lapply(ls(), function(x){class(get(x))[1]}))
@@ -133,4 +137,5 @@ for (i in 1:length(z)){
   }
 }
 rm(files, i)
-rm(linkage, this_row, z)
+rm(#linkage, 
+   this_row, z)

@@ -8,13 +8,18 @@ if('formatted_data.RData' %in% dir('data')){
   save.image('data/formatted_data.RData')
 }
 
-# Combine all data
+# Read in the linkage file
 linkage <- read_csv('data/ISO_Country_Link.csv') %>%
   rename(country_name = `COUNTRY NAME`)
-df <- linkage %>% 
-  full_join(who) %>%
-  full_join(ihme) %>%
-  full_join(population)
+
+# Combine all data
+df <- who %>%
+  left_join(linkage,
+            by = 'iso3') %>%
+  left_join(ihme,
+            by = 'country_number') %>%
+  left_join(population,
+            by = 'country_number')
 
 # Remove those rows for which there is no country_number
 # ie they do not appear in either dataset

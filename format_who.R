@@ -29,18 +29,20 @@ for (j in 1:ncol(who)){
 # Replace all periods with underscores
 names(who) <- gsub('.', '_', names(who), fixed = TRUE)
 
-# Get the country linkage name
-linkage <- read_csv('data/ISO_Country_Link.csv')
-who <- left_join(who,
-                linkage,
-                by = 'iso3') %>%
-  rename(country = `COUNTRY NAME`)
+# # Get the country linkage name
+# linkage <- read_csv('data/ISO_Country_Link.csv')
+# who <- left_join(who,
+#                 linkage,
+#                 by = 'iso3') %>%
+#   rename(country = `COUNTRY NAME`)
 
 # Reorder column names
-who <- who[,unique(c('country', 'iso3', 'country_number', names(who)))]
+# who <- who[,unique(c('country', 'iso3', 'country_number', names(who)))]
 
 # Remove all the other junk
-rm(who_a, who_b, who_c, who_d, linkage, x, i, j)
+rm(who_a, who_b, who_c, who_d, 
+   #linkage, 
+   x, i, j)
 
 # Clean up names
 # h = hiv
