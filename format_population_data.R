@@ -25,20 +25,23 @@ for (i in 1:nrow(results)){
       results[,paste0(s, '_', a)] <- NA
     }
   }
-  this_location <- results$country_number[i]
-  x <- population %>%
-    filter(sex_name == s,
-           age_group_name == a,
-           location_id == this_location) %>%
-    .$pop
-  if(length(x) == 1){
-    results[i,paste0(s, '_', a)] <- x
-  }
 }
-
+for (i in 1:nrow(results)){
+  this_location <- results$country_number[i]
+  for(s in sex_names){
+    for(a in age_group_names){
+      x <- population %>%
+        filter(sex_name == s,
+               age_group_name == a,
+               location_id == this_location) %>%
+        .$pop
+      if(length(x) == 1){
+        results[i,paste0(s, '_', a)] <- x
+      }
+    }
+  }}
 # Overwrite
 population <- results; rm(results)
-
 
 # Remove spaces in column names
 names(population) <- gsub(' ', '', names(population))

@@ -11,10 +11,10 @@ if('formatted_data.RData' %in% dir('data')){
 # Combine all data
 linkage <- read_csv('data/ISO_Country_Link.csv') %>%
   rename(country_name = `COUNTRY NAME`)
-df <- linkage %>%
-  left_join(who) %>%
-  left_join(ihme) %>%
-  left_join(population)
+df <- linkage %>% 
+  full_join(who) %>%
+  full_join(ihme) %>%
+  full_join(population)
 
 # Remove those rows for which there is no country_number
 # ie they do not appear in either dataset

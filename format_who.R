@@ -41,3 +41,13 @@ who <- who[,unique(c('country', 'iso3', 'country_number', names(who)))]
 
 # Remove all the other junk
 rm(who_a, who_b, who_c, who_d, linkage, x, i, j)
+
+# Clean up names
+# h = hiv
+# f = female
+# m = male
+# n = no hiv
+# h = hiv
+# names(who) <- gsub('_h_', '_hiv_', names(who))
+# names(who) <- gsub('_f_', '_female_', names(who))
+# names(who) <- gsub('_m_', '_male_', names(who))
