@@ -1,3 +1,5 @@
+library(readr)
+library(dplyr)
 options(scipen = '999')
 # Format all data
 if('formatted_data.RData' %in% dir('data')){
@@ -35,4 +37,11 @@ df <- df[,!grepl('_lo|_hi|_se', names(df))]
 
 # Write csv
 write_csv(df, 'data/combined_data.csv')
+
+# Create a regional view
+df <- data.frame(region = sort(unique(df$region)))
+these_names <- names(df)
+for (j in names(df)){
+  
+}
 
