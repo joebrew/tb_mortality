@@ -1,10 +1,11 @@
+options(scipen = '999')
 # Format all data
 if('formatted_data.RData' %in% dir('data')){
   load('data/formatted_data.RData')
 } else {
+  source('format_population_data.R')
   source('format_who.R')
   source('format_ihme.R')
-  source('format_population_data.R')
   save.image('data/formatted_data.RData')
 }
 
@@ -25,5 +26,13 @@ df <- who %>%
 # ie they do not appear in either dataset
 df <- df %>% filter(!is.na(country_number))
 
+# Clean up names
+names(df) <- 
+  gsub('mort', 'deaths', names(df))
+
+# Remove se and lo/hi
+df <- df[,!grepl('_lo|_hi|_se', names(df))]
+
 # Write csv
 write_csv(df, 'data/combined_data.csv')
+
