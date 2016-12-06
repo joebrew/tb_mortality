@@ -40,6 +40,79 @@ df$country_name <- gsub(',', '', df$country_name)
 df <- df[,unique(c('country_name', 'country_number', 'iso3',
                    'who_g_whoregion', 'who_year', names(df)))]
 
+# Remove all population columns from WHO
+df <- df[,!grepl('pop', names(df))]
+
+# Fix one pesky name
+names(df)[names(df) == 'who_g_whoregion'] <- 'who_region'
+
+# Remove the year
+df$who_year <- NULL
+
+# Standardize order of name elements
+# source_indicator_sex_age_hiv_ratenumber
+standardize <- function(x){
+  new_name <- x
+  x_split <- unlist(strsplit(x, split = '_'))
+  if(x_split[1] %in% c('ihme', 'who') &
+     x != 'who_region'){
+    # Source
+    source <- x_split[1]
+    
+    # Indicator
+    indicator <- 'deaths'
+    
+    # Sex
+    sex <- x_split[x_split %in% c('m', 'f', 'both')]
+    if(length(sex) == 0){
+      sex <- 'both'
+    }
+    
+    # Age
+    age <- x_split[x_split %in% c('014', '15plus', 'allages')]
+    if(length(age) == 0){
+      age <- 'allages'
+    }
+    
+    # Hiv
+    hiv <- x_split[x_split %in% c('h', 'nh')]
+    if(length(hiv) == 0){
+      hiv <- 'nh'
+    }
+    
+    # rate_number
+    rate_number <- x_split[x_split %in% c('number', 'rate')]
+    if(length(rate_number) == 0){
+      rate_number <- 'number'
+    }
+    
+    # Combine together
+    new_name <- 
+      paste0(c(source,
+             indicator,
+             sex,
+             age,
+             hiv,
+             rate_number),
+             collapse = '_')
+  }
+  return(new_name)
+}
+
+for (j in 1:ncol(df)){
+  the_old_name <- names(df)[j]
+  the_new_name <- standardize(the_old_name)
+  if(the_old_name == the_new_name){
+    message(paste0('Did not change variable ', the_old_name))
+  } else {
+    message(paste0('CHANGED variable ', 
+                   the_old_name,
+                   ' to ',
+                   the_new_name))
+    names(df)[j] <- 
+      the_new_name
+  }
+}
 
 # Write csv
 write_csv(df, 'data/combined_data.csv')
