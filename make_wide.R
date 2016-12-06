@@ -35,13 +35,19 @@ names(df) <-
 # Remove se and lo/hi
 df <- df[,!grepl('_lo|_hi|_se', names(df))]
 
+# Remove commas from country names
+df$country_name <- gsub(',', '', df$country_name)
+df <- df[,unique(c('country_name', 'country_number', 'iso3',
+                   'who_g_whoregion', 'who_year', names(df)))]
+
+
 # Write csv
 write_csv(df, 'data/combined_data.csv')
 
 # Create a regional view
-df <- data.frame(region = sort(unique(df$region)))
-these_names <- names(df)
-for (j in names(df)){
-  
-}
+# region <- data.frame(region = sort(unique(df$who_g_whoregion)))
+# these_names <- names(df)
+# for (j in names(df)){
+#   
+# }
 
