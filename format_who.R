@@ -26,8 +26,17 @@ for (j in 1:ncol(who)){
   }
 }
 
+# Replace num with number
+names(who) <- gsub('num', 'number', names(who))
+
 # Replace all periods with underscores
 names(who) <- gsub('.', '_', names(who), fixed = TRUE)
+
+# Replace with rate if necessary
+names(who) <-
+  ifelse(!grepl('number|iso3|pop|region|year', names(who)),
+         paste0(names(who), '_rate'),
+         names(who))
 
 # # Get the country linkage name
 # linkage <- read_csv('data/ISO_Country_Link.csv')

@@ -68,6 +68,8 @@ names(population) <- gsub('-', '_', names(population), fixed = TRUE)
 # Remove pluses
 names(population) <- gsub('+', '_plus_', names(population), fixed = TRUE)
 
-
+# Fix gender
+names(population) <- gsub('female', 'f', names(population))
+names(population) <- gsub('male', 'm', names(population))
 # Remove the junk
 rm(a, age_group_names, i, s, sex_names, this_location, x)
