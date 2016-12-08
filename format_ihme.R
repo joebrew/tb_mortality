@@ -220,6 +220,10 @@ names(ihme) <- gsub('number', '_number', names(ihme))
 names(ihme) <- gsub('rate', '_rate', names(ihme))
 names(ihme) <- gsub('__', '_', names(ihme))
 
+# Remove the global indicator
+ihme <-
+  ihme %>% filter(!ihme_location_name %in% 'Global')
+
 # Remove all the excess junk
 z <- unlist(lapply(ls(), function(x){class(get(x))[1]}))
 files <- ls()

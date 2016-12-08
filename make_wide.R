@@ -19,15 +19,16 @@ linkage <- read_csv('data/ISO_Country_Link.csv') %>%
 df <- who %>%
   left_join(linkage,
             by = 'iso3') %>%
+# Get IHME data for those with a country number
   left_join(ihme,
             by = 'country_number') %>%
   left_join(population,
             by = 'country_number')
 
-# Remove those rows for which there is no country_number
-# ie they do not appear in either dataset
-df <- df %>% filter(!is.na(country_number))
-
+# # Keep only data for which there is info from both datasets
+# df <- df %>%
+#   filter(!is.na(ihme_deaths_m_014_h_rate),
+#          !is.na(who_mort_h_014_rate))
 # Clean up names
 names(df) <- 
   gsub('mort', 'deaths', names(df))
