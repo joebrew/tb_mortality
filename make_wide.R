@@ -14,6 +14,7 @@ if('formatted_data.RData' %in% dir('data')){
 # Read in the linkage file
 linkage <- read_csv('data/ISO_Country_Link.csv') %>%
   rename(country_name = `COUNTRY NAME`)
+linkage <- data.frame(linkage)
 
 # Combine all data
 df <- who %>%
@@ -28,6 +29,16 @@ df <- who %>%
   mutate(have_who = !is.na(who_mort_h_number),
          have_ihme = !is.na(ihme_deaths_f_allages_h_number)) %>%
   mutate(have_both = have_who & have_ihme)
+df <- data.frame(df)
+df$country_name <- as.character(df$country_name)
+
+# Get missing country names if relevant
+for (i in 1:nrow(df)){
+  if(is.na(df$country_name[i])){
+    df$country_name[i] <-
+      linkage$country_name[which(linkage$country_number == df$country_number[i])][1]
+  }
+}
 
 # # Keep only data for which there is info from both datasets
 # df <- df %>%
@@ -42,6 +53,7 @@ df <- df[,!grepl('_lo|_hi|_se', names(df))]
 
 # Remove commas from country names
 df$country_name <- gsub(',', '', df$country_name)
+df <- data.frame(df)
 df <- df[,unique(c('country_name', 'country_number', 'iso3',
                    'who_g_whoregion', 'who_year', names(df)))]
 
@@ -180,18 +192,22 @@ albertify <- function(x){
 }
 
 
-for (j in 1:ncol(df)){
-  the_old_name <- names(df)[j]
-  the_new_name <- albertify(the_old_name)
-  if(the_old_name == the_new_name){
-    message(paste0('Did not change variable ', the_old_name))
-  } else {
-    message(paste0('CHANGED variable ', 
-                   the_old_name,
-                   ' to ',
-                   the_new_name))
-    names(df)[j] <-
-    the_new_name
+for (j in 5:ncol(df)){
+  if(!grepl('have', names(df)[j])){
+    the_old_name <- names(df)[j]
+    the_new_name <- albertify(the_old_name)
+    print(j)
+    print(the_new_name)
+    if(the_old_name == the_new_name){
+      message(paste0('Did not change variable ', the_old_name))
+    } else {
+      message(paste0('CHANGED variable ',
+                     the_old_name,
+                     ' to ',
+                     the_new_name))
+      names(df)[j] <-
+        the_new_name
+    }
   }
 }
 

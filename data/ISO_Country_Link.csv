@@ -224,7 +224,7 @@ TTO,Trinidad and Tobago,119
 TUN,Tunisia,154
 TUR,Turkey,155
 TUV,Tuvalu,
-TWN,"Taiwan, Province of Chine",8
+TWN,Taiwan,8
 TZA,"Tanzania, United Republic of",189
 UGA,Uganda,190
 UKR,Ukraine,63
@@ -246,3 +246,7 @@ ZAF,South Africa,196
 ZMB,Zambia,191
 ZWE,Zimbabwe,198
 SSD,South Sudan,435
+FSM,Federated States of Micronesia,25
+BES,"Bonaire, Sint Eustatius and Saba",
+CUW,Curacao,
+SXM,Sint Maarten,
