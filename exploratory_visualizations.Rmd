@@ -1,0 +1,396 @@
+---
+title: "Exploratory visualizations"
+author: "Joe Brew and Alberto García-Basteiro"
+date: "December 18, 2016"
+output:
+  html_document:
+    pandoc_args: [
+      "+RTS", "-K16000m",
+      "-RTS"
+    ]
+    toc: true
+    toc_float: true
+    theme: yeti
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(comment = NA, 
+               echo = FALSE, 
+               warning = FALSE, 
+               message = FALSE, 
+               error = TRUE, 
+               cache = FALSE)
+```
+
+```{r, results = 'hide'}
+# Packages
+library(ggplot2)
+library(cism)
+library(rworldmap)
+library(rgeos)
+library(maptools)
+library(rgdal)
+library(tidyr)
+
+# Read in data
+source('make_wide.R')
+
+# Get world map
+world <- readOGR('shp/world', 'ne_110m_admin_0_countries')
+
+```
+
+# Introduction
+
+This is an informal, exploratory document. Its purpose is to inform and guide the collaboration between Joe Brew and Alberto García-Basteiro in comparing WHO and IHME TB and TB-HIV mortality data.
+
+# Charts
+
+
+
+
+## Overall correlation
+
+```{r}
+ggplot(data = df,
+       aes(x = w_both_all_tbtotal_nd,
+           y = i_both_all_tbtotal_nd)) +
+  geom_point(color = 'darkgreen', alpha = 0.6) +
+  theme_cism() +
+  scale_y_log10() +
+  scale_x_log10() +
+  labs(x = 'WHO',
+       y = 'IHME',
+       title = 'Correlation between WHO and IHME mortality numbers',
+       subtitle = 'Log scale, includes both TB and TB+HIV cases') +
+  geom_abline(color = 'darkorange',
+              alpha = 0.6)
+```
+
+## Region-specific breakdown
+
+The below scatterplot shows the correlation between WHO (x-axis) estimates and IHME (y-axis) estimates, with each point colored by its (WHO-defined) region. The (orange) line of best fit is for the entire dataset.
+
+```{r}
+cols <- colorRampPalette(brewer.pal(n = 9, name = 'Spectral'))(length(unique(df$who_region)))
+ggplot(data = df,
+       aes(x = w_both_all_tbtotal_nd,
+           y = i_both_all_tbtotal_nd,
+           color = who_region)) +
+  geom_point(alpha = 0.6) +
+  theme_cism() +
+  scale_y_log10() +
+  scale_x_log10() +
+  labs(x = 'WHO',
+       y = 'IHME',
+       title = 'Correlation between WHO and IHME mortality numbers',
+       subtitle = 'Log scale, includes both TB and TB+HIV cases') +
+   # geom_smooth(method='lm', se = FALSE, alpha = 0.6) +
+  geom_abline(color = 'darkorange',
+              alpha = 0.6) +
+  scale_color_manual(name = 'Region',
+                     values = cols)
+```
+
+We can fit each region's line of best fit. Doing so shows that estimates are most "systematically" different in the African region.
+```{r}
+cols <- colorRampPalette(brewer.pal(n = 9, name = 'Spectral'))(length(unique(df$who_region)))
+ggplot(data = df,
+       aes(x = w_both_all_tbtotal_nd,
+           y = i_both_all_tbtotal_nd,
+           color = who_region)) +
+  geom_point(alpha = 0.6) +
+  theme_cism() +
+  scale_y_log10() +
+  scale_x_log10() +
+  labs(x = 'WHO',
+       y = 'IHME',
+       title = 'Correlation between WHO and IHME mortality numbers',
+       subtitle = 'Log scale, includes both TB and TB+HIV cases') +
+   geom_smooth(method='lm', se = FALSE, alpha = 0.2) +
+  # geom_abline(color = 'darkorange',
+  #             alpha = 0.6) +
+  scale_color_manual(name = 'Region',
+                     values = cols)
+```
+
+We can also examine relative difference in estimates, by WHO region. The below violin charts show the distribution of relative difference (defined here as the absolute difference in total number of TB deaths, divided by that maximum estimate of the two sources). The jittered points represent each country.
+
+```{r}
+cols <- colorRampPalette(brewer.pal(n = 9, name = 'Spectral'))(length(unique(df$who_region)))
+
+temp <- df %>%
+         mutate(absolute_difference = abs(w_both_all_tbtotal_nd - i_both_all_tbtotal_nd)) 
+temp$max_deaths <- 
+  if_else(temp$w_both_all_tbtotal_nd >= temp$i_both_all_tbtotal_nd,
+          temp$w_both_all_tbtotal_nd,
+          ifelse(temp$w_both_all_tbtotal_nd < temp$i_both_all_tbtotal_nd,
+                 temp$i_both_all_tbtotal_nd,
+                 NA))
+
+temp <- temp %>%
+  mutate(relative_difference = absolute_difference / max_deaths)
+
+temp <- temp %>%
+  filter(!is.na(who_region))
+  
+ggplot(data = temp,
+       aes(x = who_region,
+           y = relative_difference)) +
+  geom_jitter(aes(color = who_region), #color = 'darkgreen', 
+              alpha = 0.8) +
+  geom_violin(aes(fill = who_region),
+    # fill = 'darkorange', 
+    alpha = 0.3) +
+  theme_cism() +
+  labs(x = 'WHO Region',
+       y = 'Relative difference',
+       title = 'Variance in estimates between WHO and IHME',
+       subtitle = 'Absolute difference divided by maximum value') +
+  scale_color_manual(name = '',
+                     values = cols) +
+  scale_fill_manual(name = '',
+                    values = cols) +
+  guides(color = FALSE,
+         fill = FALSE)
+```
+
+# Maps
+
+## Comparative choropleths
+
+```{r}
+# Expand
+world_tidy <- broom::tidy(world, region = 'iso_a3')
+# Join in data
+world@data <-
+  left_join(x = world@data,
+            y = df,
+            by = c('iso_a3' = 'iso3'))
+# Join to the tidy version too
+world_tidy <-
+  left_join(x = world_tidy,
+            y = df,
+            by = c('id' = 'iso3'))
+
+# Remove those which are unknown
+world_tidy <- world_tidy %>%
+  filter(id != '-99',
+         !is.na(country))
+
+# Plot
+g1 <- 
+  ggplot(data = world_tidy,
+       aes(x = long,
+           y = lat,
+           group = group,
+           fill = i_both_all_tbtotal_nd)) +
+  coord_map() +
+  geom_polygon(color = 'darkorange',  size = 0.1) +
+  theme_cism() +
+  scale_fill_gradient2(#low = 'darkgreen',
+                       #mid = 'white',
+                      #   high = 'darkorange',
+                       name = '') +
+  labs(x = 'Longitude',
+       y = 'Latitude',
+       title = 'IHME',
+       subtitle = 'Number of deaths (TB + TB/HIV)')
+g2 <- 
+  ggplot(data = world_tidy,
+       aes(x = long,
+           y = lat,
+           group = group,
+           fill = w_both_all_tbtotal_nd)) +
+  coord_map() +
+  geom_polygon(color = 'darkorange',  size = 0.1) +
+  theme_cism() +
+  scale_fill_gradient2(#low = 'darkgreen',
+                       #mid = 'white',
+                      #   high = 'darkorange',
+                       name = '') +
+  labs(x = 'Longitude',
+       y = 'Latitude',
+       title = 'WHO',
+       subtitle = 'Number of deaths (TB + TB/HIV)') 
+
+
+```
+
+### IHME
+
+```{r}
+g1
+```
+
+### WHO
+
+```{r}
+g2
+```
+
+## Choropleth of absolute differences
+
+```{r}
+temp <- df %>%
+         mutate(absolute_difference = abs(w_both_all_tbtotal_nd - i_both_all_tbtotal_nd)) 
+temp$max_deaths <- 
+  if_else(temp$w_both_all_tbtotal_nd >= temp$i_both_all_tbtotal_nd,
+          temp$w_both_all_tbtotal_nd,
+          ifelse(temp$w_both_all_tbtotal_nd < temp$i_both_all_tbtotal_nd,
+                 temp$i_both_all_tbtotal_nd,
+                 NA))
+temp <- temp %>%
+  mutate(relative_difference = absolute_difference / max_deaths)
+world_tidy <-
+  left_join(x = world_tidy,
+            y = temp)
+
+ggplot(data = world_tidy,
+       aes(x = long,
+           y = lat,
+           group = group,
+           fill = absolute_difference)) +
+  coord_map() +
+  geom_polygon(color = 'darkorange',  size = 0.1) +
+  theme_cism() +
+  scale_fill_gradient2(#low = 'darkgreen',
+                       #mid = 'white',
+                      #   high = 'darkorange',
+                       name = '') +
+  labs(x = 'Longitude',
+       y = 'Latitude',
+       title = 'Absolute difference',
+       subtitle = 'Number of deaths (TB + TB/HIV)') 
+```
+
+
+## Choropleth of relative differences
+
+```{r}
+temp <- df %>%
+         mutate(absolute_difference = abs(w_both_all_tbtotal_nd - i_both_all_tbtotal_nd)) 
+temp$max_deaths <- 
+  if_else(temp$w_both_all_tbtotal_nd >= temp$i_both_all_tbtotal_nd,
+          temp$w_both_all_tbtotal_nd,
+          ifelse(temp$w_both_all_tbtotal_nd < temp$i_both_all_tbtotal_nd,
+                 temp$i_both_all_tbtotal_nd,
+                 NA))
+temp <- temp %>%
+  mutate(relative_difference = absolute_difference / max_deaths)
+world_tidy <-
+  left_join(x = world_tidy,
+            y = temp)
+
+ggplot(data = world_tidy,
+       aes(x = long,
+           y = lat,
+           group = group,
+           fill = relative_difference)) +
+  coord_map() +
+  geom_polygon(color = 'darkorange',  size = 0.1) +
+  theme_cism() +
+  scale_fill_gradient2(#low = 'darkgreen',
+                       #mid = 'white',
+                      #   high = 'darkorange',
+                       name = '') +
+  labs(x = 'Longitude',
+       y = 'Latitude',
+       title = 'Absolute difference',
+       subtitle = 'Number of deaths (TB + TB/HIV)') 
+```
+
+
+## Bubble map of absolute difference
+
+```{r}
+
+world@data <-
+  left_join(x = world@data,
+            y = temp)
+world@data$x <- coordinates(world)[,1]
+world@data$y <- coordinates(world)[,2]
+
+
+
+ggplot(data = world@data,
+       aes(x = x,
+           y = y,
+           size = absolute_difference)) +
+  coord_map() +
+  geom_polygon(data = world_tidy,
+               aes(x = long,
+                   y = lat,
+                   group = group),
+               # color = 'darkgreen', 
+               size = 0.1,
+               fill = 'darkgreen',
+               alpha = 0.3) +
+  # geom_polygon(color = 'darkorange',  size = 0.1) +
+  geom_point(color = 'darkorange',
+             alpha =0.3) +
+  theme_cism() +
+  labs(x = 'Longitude',
+       y = 'Latitude',
+       title = 'Absolute difference',
+       subtitle = 'Number of deaths (TB + TB/HIV)') +
+  scale_size_continuous(name = 'Deaths')
+
+```
+
+
+## Bubble map of relative difference
+
+```{r}
+
+ggplot(data = world@data,
+       aes(x = x,
+           y = y,
+           size = relative_difference)) +
+  coord_map() +
+  geom_polygon(data = world_tidy,
+               aes(x = long,
+                   y = lat,
+                   group = group),
+               # color = 'darkgreen', 
+               size = 0.1,
+               fill = 'darkgreen',
+               alpha = 0.3) +
+  # geom_polygon(color = 'darkorange',  size = 0.1) +
+  geom_point(color = 'darkorange',
+             alpha =0.3) +
+  theme_cism() +
+  labs(x = 'Longitude',
+       y = 'Latitude',
+       title = 'Relative difference',
+       subtitle = 'Number of deaths (TB + TB/HIV)') +
+  scale_size_continuous(name = 'Proportion')
+```
+
+## Interactive map
+
+```{r}
+library(leaflet)
+qpal <- colorQuantile("YlGn", world@data$relative_difference, n = 5, na.color = "#bdbdbd")
+
+popup <- paste0("<strong>Country: </strong>",
+                    world@data$country,
+                    "<br><strong>WHO: </strong>",
+                    round(world@data$w_both_all_tbtotal_nd, digits = 2),
+                    "<br><strong>IHME: </strong>",
+                    round(world@data$i_both_all_tbtotal_nd, digits = 2),
+                "<br><strong>Relative difference: </strong>",
+                round(world@data$relative_difference, digits = 3),
+                "<br><strong>Absolute difference: </strong>",
+                round(world@data$absolute_difference, digits = 3))
+
+leaflet(data = world) %>%
+  addProviderTiles("CartoDB.Positron") %>% 
+  # clearShapes() %>% 
+  # clearControls() %>% 
+  addPolygons(data = world, fillColor = ~qpal(relative_difference), fillOpacity = 0.7, 
+              color = "white", weight = 2, popup = popup) %>%
+  addLegend(pal = qpal, values = ~relative_difference, opacity = 0.7,
+            position = 'bottomright', 
+            title = paste0('Relative difference', "<br>"))
+```

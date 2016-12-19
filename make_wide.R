@@ -196,15 +196,15 @@ for (j in 5:ncol(df)){
   if(!grepl('have', names(df)[j])){
     the_old_name <- names(df)[j]
     the_new_name <- albertify(the_old_name)
-    print(j)
-    print(the_new_name)
+    # print(j)
+    # print(the_new_name)
     if(the_old_name == the_new_name){
-      message(paste0('Did not change variable ', the_old_name))
+      # message(paste0('Did not change variable ', the_old_name))
     } else {
-      message(paste0('CHANGED variable ',
-                     the_old_name,
-                     ' to ',
-                     the_new_name))
+      # message(paste0('CHANGED variable ',
+      #                the_old_name,
+      #                ' to ',
+      #                the_new_name))
       names(df)[j] <-
         the_new_name
     }
@@ -239,35 +239,18 @@ has_high_mdr <- c(168, 34, 161, 57, 6, 171, 179, 11,
                   165, 123, 16, 26, 7, 62, 187, 18,
                   39, 63, 41, 20, 196, 198)
 df$highmdr[df$country_number %in% has_high_mdr] <- 1
-# 
-# # Create variable ALL TB DEATHS by WHO 
-# 
+
+# CREATE NEW VARIABLES
+# Use format: source_sex_age_disease_indicator
+# Alberto's stata code in comments
+
+# # Create variable ALL TB DEATHS WHO
 # egen wndalltb = rowtotal (wndtb_all wndhtb_all)
-# 
+df$w_both_all_tbtotal_nd <- df$w_both_all_htb_nd + df$w_both_all_tb_nd
+
 # *Create variable ALL TB DEATHS by IHME (i need to destring first).
 # egen indalltb = rowtotal (indtb_all indhtb_all)
-# 
-# *CREATE ALL TB DEATHS IN CHILDREN AND ADULTS BY IHME
-# egen indalltb_call = rowtotal (indtb_call indhtb_call)
-# egen indalltb_aall = rowtotal (indtb_aall indhtb_aall)
-# 
-# * CREATE ALL TB DEATHS IN MALES AND FEMALES BY IHME
-# egen indalltb_mall = rowtotal  (indtb_mall indhtb_mall)
-# egen indalltb_fall = rowtotal  (indtb_fall indhtb_fall)
-# 
-# 
-# *Para conseguir sumatorio de todos los valores,
-# tabstat wndalltb, stat(sum)
-# tabstat indalltb , stat(sum)
-
+df$i_both_all_tbtotal_nd <- df$i_both_all_htb_nd + df$i_both_all_tb_nd
 
 # Write csv
 write_csv(df, 'data/combined_data.csv')
-
-# Create a regional view
-# region <- data.frame(region = sort(unique(df$who_g_whoregion)))
-# these_names <- names(df)
-# for (j in names(df)){
-#   
-# }
-
