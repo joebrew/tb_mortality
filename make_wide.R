@@ -218,5 +218,25 @@ df <-
   left_join(gb,
             by = 'iso3')
 
+# Bring in variables from notifications
+df <-
+  df %>%
+  left_join(notifications,
+            by = 'iso3')
+
+# Bring in variable from mdr
+df <-
+  df %>%
+  left_join(mdr,
+            by = 'iso3')
+
+# Create a proportion of hiv cases among tb cases
+df$p_hiv_of_tb <-
+  df$newrel_hivpos / df$newrel_hivtes * 100
+
+# Rename the proportion of mdr among new cases
+df$p_mdr_new <- 
+  df$e_rr_pct_new
+
 # Write csv
 write_csv(df, 'data/combined_data.csv')
