@@ -17,6 +17,9 @@ There are 4 direct data sources used for this project:
     - `data/File c excel WHO_pg.xlsx`
     - `data/File d excel WHO_pg.xlsx`
   - All of the above were sent by email to Alberto Garcia-Basteiro by Philippe Glaziou (WHO) on 23-11-2016 (Mario Raviglione, Frank Cobelens, Babis Sismanidis (WHO officers) copied in the email.
+    - `data/TB_notifications_2016-12-20.csv`
+    - `data/MDR_RR_TB_burden_estimates_2016-12-20.csv` 
+  - The above were downloaded from  http://www.who.int/tb/country/data/download/en/ on December 20, 2016
 
 3. Global burden of disease data:
     - `data/Global burden public excel WHO.xlsx`
