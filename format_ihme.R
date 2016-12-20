@@ -206,7 +206,7 @@ names(ihme) <- paste0('ihme_', names(ihme))
 # ihme$country <- ihme$ihme_location_name
 
 # Remove all incidence related variables
-ihme <- ihme[,!grepl('incidence', names(ihme))]
+# ihme <- ihme[,!grepl('incidence', names(ihme))]
 
 ihme$country_number <- ihme$ihme_location_id
 
@@ -223,6 +223,11 @@ names(ihme) <- gsub('__', '_', names(ihme))
 # Remove the global indicator
 ihme <-
   ihme %>% filter(!ihme_location_name %in% 'Global')
+
+# Remove any incidence number column
+remove_these <- which(grepl('incidence', names(ihme)) &
+                        grepl('number', names(ihme)))
+ihme <- ihme[,!(1:ncol(ihme)) %in% remove_these]
 
 # Remove all the excess junk
 z <- unlist(lapply(ls(), function(x){class(get(x))[1]}))

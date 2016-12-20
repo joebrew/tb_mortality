@@ -68,55 +68,6 @@ names(df)[names(df) == 'who_g_whoregion'] <- 'who_region'
 # Remove the year
 df$who_year <- NULL
 
-# # Standardize order of name elements
-# # source_indicator_sex_age_hiv_ratenumber
-# standardize <- function(x){
-#   new_name <- x
-#   x_split <- unlist(strsplit(x, split = '_'))
-#   if(x_split[1] %in% c('ihme', 'who') &
-#      x != 'who_region'){
-#     # Source
-#     source <- x_split[1]
-#     
-#     # Indicator
-#     indicator <- 'deaths'
-#     
-#     # Sex
-#     sex <- x_split[x_split %in% c('m', 'f', 'both')]
-#     if(length(sex) == 0){
-#       sex <- 'both'
-#     }
-#     
-#     # Age
-#     age <- x_split[x_split %in% c('014', '15plus', 'allages')]
-#     if(length(age) == 0){
-#       age <- 'allages'
-#     }
-#     
-#     # Hiv
-#     hiv <- x_split[x_split %in% c('h', 'nh')]
-#     if(length(hiv) == 0){
-#       hiv <- 'nh'
-#     }
-#     
-#     # rate_number
-#     rate_number <- x_split[x_split %in% c('number', 'rate')]
-#     if(length(rate_number) == 0){
-#       rate_number <- 'number'
-#     }
-#     
-#     # Combine together
-#     new_name <- 
-#       paste0(c(source,
-#              indicator,
-#              sex,
-#              age,
-#              hiv,
-#              rate_number),
-#              collapse = '_')
-#   }
-#   return(new_name)
-# }
 
 # Standardize per Alberto Garcia Basteiro's naming schema
 # who = w
@@ -139,9 +90,6 @@ albertify <- function(x){
     } else {
       source <- 'PROBLEMWITHSOURCE'
     }
-    
-    # # Indicator
-    # indicator <- 'deaths'
     
     # Sex
     sex <- x_split[x_split %in% c('m', 'f', 'both')]
@@ -170,14 +118,18 @@ albertify <- function(x){
     }
     
     # rate_number
-    rate_number <- x_split[x_split %in% c('number', 'rate')]
-    if(length(rate_number) == 0){
-      rate_number <- 'number'
-    } 
-    if(rate_number == 'number'){
-      rate_number <- 'nd'
+    rate_number <- x_split[x_split %in% c('number', 'rate', 'incidence')]
+    if('incidence' %in% rate_number){
+      rate_number <- 'in'
     } else {
-      rate_number <- 'mr'
+      if(length(rate_number) == 0){
+        rate_number <- 'number'
+      } 
+      if(rate_number == 'number'){
+        rate_number <- 'nd'
+      } else {
+        rate_number <- 'mr'
+      }
     }
     
     # Combine together
@@ -189,24 +141,27 @@ albertify <- function(x){
                hiv,
                rate_number),
              collapse = '_')
+    
   }
   return(new_name)
 }
 
 
-for (j in 5:ncol(df)){
+okay_to_change <- which(!names(df) %in% 
+                          c('country_name',
+                            'country_number',
+                            'iso3',
+                            'who_region'))
+for (j in okay_to_change){
   if(!grepl('have', names(df)[j])){
     the_old_name <- names(df)[j]
     the_new_name <- albertify(the_old_name)
-    # print(j)
+    # print(the_old_name)
     # print(the_new_name)
     if(the_old_name == the_new_name){
-      # message(paste0('Did not change variable ', the_old_name))
+      message(paste0('Did not change variable ', the_old_name))
     } else {
-      # message(paste0('CHANGED variable ',
-      #                the_old_name,
-      #                ' to ',
-      #                the_new_name))
+      # messaC          the_new_name))
       names(df)[j] <-
         the_new_name
     }
