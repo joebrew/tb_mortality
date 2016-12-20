@@ -23,4 +23,4 @@ To combine the different direct sources into one "wide" dataset, run `make_wide.
 
 ## Questions
 
-For questions on this project, email joe@economicsofmalaria.com.
+For questions on this project, email joe@economicsofmalaria.com or alberto@basteiro.com.
