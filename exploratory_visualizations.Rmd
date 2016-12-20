@@ -57,14 +57,18 @@ ggplot(data = df,
            y = i_both_all_tbtotal_nd)) +
   geom_point(color = 'darkgreen', alpha = 0.6) +
   theme_cism() +
-  scale_y_log10() +
-  scale_x_log10() +
   labs(x = 'WHO',
        y = 'IHME',
        title = 'Correlation between WHO and IHME mortality numbers',
        subtitle = 'Log scale, includes both TB and TB+HIV cases') +
   geom_abline(color = 'darkorange',
-              alpha = 0.6)
+              alpha = 0.6) +
+  xlim(0, 150000) +
+  ylim(0, 150000) +
+    scale_y_log10() +
+  scale_x_log10() 
+
+
 ```
 
 ## Region-specific breakdown

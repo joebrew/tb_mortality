@@ -1,5 +1,6 @@
 library(tidyr)
 library(readxl)
+library(dplyr)
 
 # Read in data
 gb <- read_excel('data/Global burden public excel WHO.xlsx')

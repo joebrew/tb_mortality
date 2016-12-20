@@ -151,7 +151,8 @@ okay_to_change <- which(!names(df) %in%
                           c('country_name',
                             'country_number',
                             'iso3',
-                            'who_region'))
+                            'who_region') &
+                          !grepl('gb_', names(df)))
 for (j in okay_to_change){
   if(!grepl('have', names(df)[j])){
     the_old_name <- names(df)[j]
