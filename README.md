@@ -1,16 +1,26 @@
 
-# tb_mortality
+# Comparing TB mortality sources: IHME vs. WHO
 
-Email from Alberto:
+## Data sources
 
-So this is the first data management need for the analysis of TB mortality! I am so excited!! I think i could download the database i wanted, so pretty cool!
+There are 4 direct data sources used for this project:
 
-I think i could potentially do it, but I am pretty sure you can do it much much faster!
+1. IHME data:
 
-I would need this dataset to be reorganized in a "easy to analyze" format.
+2. WHO data:
 
-I basically would like each country in each row and the other variables as columns. 
+3. Global burden of disease data:
 
-As you can see, there are columns which are tags to different codes... I still don't know how i want that, since i will probably work in stata... So i will try to organize the labels myself (unless there is a universal way of doing it"
+4. Population data:
 
-I am engaging with WHO to get the exact same data from their estimates... From the files that are publically available it is not supereasy, because they are not in database format
+Additionally, for visualizations, global administrative boundaries were retrieved from:
+
+- Natural Earth Data, administrative level 0, country boundaries: http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/110m/cultural/ne_110m_admin_0_countries.zip
+
+## Combining data
+
+To combine the different direct sources into one "wide" dataset, run `make_wide.R`. 
+
+## Questions
+
+For questions on this project, email joe@economicsofmalaria.com.
