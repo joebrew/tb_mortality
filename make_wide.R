@@ -31,19 +31,21 @@ df <- who %>%
   mutate(have_both = have_who & have_ihme)
 df <- data.frame(df)
 df$country_name <- as.character(df$country_name)
+df$iso3 <- as.character(df$iso3)
 
 # Get missing country names if relevant
 for (i in 1:nrow(df)){
   if(is.na(df$country_name[i])){
     df$country_name[i] <-
       linkage$country_name[which(linkage$country_number == df$country_number[i])][1]
+    df$iso3[i] <-
+      linkage$iso3[which(linkage$country_number == df$country_number[i])][1]
   }
 }
 
-# # Keep only data for which there is info from both datasets
-# df <- df %>%
-#   filter(!is.na(ihme_deaths_m_014_h_rate),
-#          !is.na(who_mort_h_014_rate))
+# Manually add Taiwan to Western Pacific region
+df$who_g_whoregion[df$iso3 == 'TWN'] <- 'WPR'
+
 # Clean up names
 names(df) <- 
   gsub('mort', 'deaths', names(df))
@@ -251,6 +253,14 @@ df$w_both_all_tbtotal_nd <- df$w_both_all_htb_nd + df$w_both_all_tb_nd
 # *Create variable ALL TB DEATHS by IHME (i need to destring first).
 # egen indalltb = rowtotal (indtb_all indhtb_all)
 df$i_both_all_tbtotal_nd <- df$i_both_all_htb_nd + df$i_both_all_tb_nd
+
+# Format variables from Global burden public
+# and join to df
+source('format_global_burden.R')
+df <-
+  df %>%
+  left_join(gb,
+            by = 'iso3')
 
 # Write csv
 write_csv(df, 'data/combined_data.csv')
