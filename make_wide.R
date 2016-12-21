@@ -219,12 +219,14 @@ df <-
             by = 'iso3')
 
 # Bring in variables from notifications
+source('format_notifications.R')
 df <-
   df %>%
   left_join(notifications,
             by = 'iso3')
 
 # Bring in variable from mdr
+source('format_mdr.R')
 df <-
   df %>%
   left_join(mdr,
@@ -237,6 +239,53 @@ df$p_hiv_of_tb <-
 # Rename the proportion of mdr among new cases
 df$p_mdr_new <- 
   df$e_rr_pct_new
+
+# Get the absolute difference in total
+# hiv+tb deaths betwen ihme and who
+df$absolute_difference <- 
+  abs(df$w_both_all_tbtotal_nd - 
+        df$i_both_all_tbtotal_nd)
+
+# And max number of deaths (hiv+tb) between the two
+df$max_deaths <-
+  if_else(df$w_both_all_tbtotal_nd >= df$i_both_all_tbtotal_nd,
+          df$w_both_all_tbtotal_nd,
+          ifelse(df$w_both_all_tbtotal_nd < df$i_both_all_tbtotal_nd,
+                 df$i_both_all_tbtotal_nd,
+                 NA))
+
+# Get the relative difference, using the max_deaths as the baseline
+df <- df %>%
+  mutate(relative_difference = absolute_difference / max_deaths)
+
+# Get relative difference : ihme over who
+df$i_over_w <- 
+  df$i_both_all_tbtotal_nd / 
+  df$w_both_all_tbtotal_nd
+  
+# Get relative difference : who over ihme
+df$w_over_i <- 
+  df$w_both_all_tbtotal_nd / 
+  df$i_both_all_tbtotal_nd
+
+
+# Get absolute differences
+df$w_minus_i <-
+  df$w_both_all_tbtotal_nd -
+  df$i_both_all_tbtotal_nd
+
+df$i_minus_w <-
+  df$i_both_all_tbtotal_nd - 
+  df$w_both_all_tbtotal_nd
+
+
+# Calculate the Frank Kobbelens metric
+# Number of reported cases divided by deaths
+# Use: c_newinc
+df$i_cases_over_deaths <-
+  df$c_newinc / df$i_both_all_tbtotal_nd
+df$w_cases_over_deaths <-
+  df$c_newinc / df$w_both_all_tbtotal_nd
 
 # Write csv
 write_csv(df, 'data/combined_data.csv')
