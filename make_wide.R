@@ -225,12 +225,32 @@ df <-
   left_join(notifications,
             by = 'iso3')
 
+# Bring in variables from outcomes
+source('format_outcomes.R')
+df <- df %>%
+  left_join(outcomes,
+            by = 'iso3')
+
 # Bring in variable from mdr
 source('format_mdr.R')
 df <-
   df %>%
   left_join(mdr,
             by = 'iso3')
+
+
+# Calculate new variable for Alberto
+df <- df %>%
+  mutate(case_fatality_rate_2014 = 
+           (newrel_died + 
+              ret_nrel_died ) /  
+           ( ret_nrel_coh + 
+               newrel_coh ))
+# Apply this case fatality rate to the total cases of 2015 
+# (which is the addition of c_newinc + ret_nrel ).
+df$estimated_case_fatality_rate_2015 <-
+  df$case_fatality_rate_2014 * 
+  (df$c_newinc + df$ret_nrel_coh)
 
 # Create a proportion of hiv cases among tb cases
 df$p_hiv_of_tb <-
