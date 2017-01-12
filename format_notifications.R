@@ -13,4 +13,5 @@ notifications <-
 notifications <- notifications %>%
   dplyr::select(iso3, c_newinc,
                 newrel_hivpos,
-                newrel_hivtest)
+                newrel_hivtest,
+                ret_nrel)

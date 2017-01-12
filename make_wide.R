@@ -250,7 +250,7 @@ df <- df %>%
 # (which is the addition of c_newinc + ret_nrel ).
 df$estimated_fatalities_2015 <-
   df$case_fatality_rate_2014 * 
-  (df$c_newinc + df$ret_nrel_coh)
+  (df$c_newinc + df$ret_nrel)
 
 # Create a proportion of hiv cases among tb cases
 df$p_hiv_of_tb <-
