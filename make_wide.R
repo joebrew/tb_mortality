@@ -248,7 +248,7 @@ df <- df %>%
                newrel_coh ))
 # Apply this case fatality rate to the total cases of 2015 
 # (which is the addition of c_newinc + ret_nrel ).
-df$estimated_case_fatality_rate_2015 <-
+df$estimated_fatalities_2015 <-
   df$case_fatality_rate_2014 * 
   (df$c_newinc + df$ret_nrel_coh)
 
