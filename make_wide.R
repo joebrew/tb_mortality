@@ -307,5 +307,27 @@ df$i_cases_over_deaths <-
 df$w_cases_over_deaths <-
   df$c_newinc / df$w_both_all_tbtotal_nd
 
+# Calculate standardized difference
+# per Alberto's method
+df <- df %>%
+  mutate(stand_w = w_both_all_tbtotal_nd / estimated_fatalities_2015,
+         stand_i = i_both_all_tbtotal_nd / estimated_fatalities_2015,
+         stand_dif= (w_both_all_tbtotal_nd-i_both_all_tbtotal_nd) / estimated_fatalities_2015)
+
+# Get ranking of standdif
+df <- df %>%
+  mutate(dummy = 1) %>%
+  arrange(desc(stand_dif)) %>%
+  mutate(rank_stand_dif = cumsum(dummy)) %>%
+  dplyr::select(-dummy)
+
+# Make percentile of stand dif
+df <- df %>%
+  mutate(percentile_stand_dif = percent_rank(stand_dif) * 100)
+
+# Make log of stand dif
+df <- df %>%
+  mutate(log_stand_dif = log(stand_dif))
+
 # Write csv
 write_csv(df, 'data/combined_data.csv')
