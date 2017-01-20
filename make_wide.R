@@ -242,7 +242,7 @@ df <-
 # Apply this case fatality rate to the total cases of 2015 
 # (which is the addition of c_newinc + ret_nrel ).
 df$estimated_fatalities_2015 <-
-  df$case_fatality_rate_2014 * 
+  df$case_fatality_rate_2015_adjusted * 
   (df$c_newinc + df$ret_nrel)
 
 df$estimated_fatalities_2015_using_2012_to_2014_data <-
@@ -325,6 +325,11 @@ df <- df %>%
 # Make log of stand dif
 df <- df %>%
   mutate(log_stand_dif = log(stand_dif))
+
+# Make stand_dif as percentage of max
+df$adjusted_stand_dif <- df$stand_dif / max(df$stand_dif, na.rm = TRUE) * 100
+
+# Done! 
 
 # Write csv
 write_csv(df, 'data/combined_data.csv')

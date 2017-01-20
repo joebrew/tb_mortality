@@ -1,7 +1,7 @@
 ---
 title: "Exploratory visualizations"
 author: "Joe Brew and Alberto García-Basteiro"
-date: "December 18, 2016"
+date: "January 20, 2017"
 fig_height: 5
 fig_width: 7
 output: ioslides_presentation
