@@ -311,6 +311,10 @@ df <- df %>%
          stand_i = i_both_all_tbtotal_nd / estimated_fatalities_2015,
          stand_dif= (w_both_all_tbtotal_nd-i_both_all_tbtotal_nd) / estimated_fatalities_2015)
 
+# Fix the infs
+df$stand_dif[is.infinite(df$stand_dif)] <- NA
+
+
 # Get ranking of standdif
 df <- df %>%
   mutate(dummy = 1) %>%
@@ -329,7 +333,20 @@ df <- df %>%
 # Make stand_dif as percentage of max
 df$adjusted_stand_dif <- df$stand_dif / max(df$stand_dif, na.rm = TRUE) * 100
 
-# Done! 
+# Make an adjusted log stand dif with negatives
+df$stand_dif_sqrt_directional <- sqrt(abs(df$stand_dif))
+df$stand_dif_sqrt_directional <- ifelse(df$stand_dif > 0,
+                                    df$stand_dif_sqrt_directional,
+                                    df$stand_dif_sqrt_directional * -1)
+
+
+# Create age specific who variables
+df$w_both_15plus_htb_nd <- 
+  df$w_both_all_htb_nd - df$w_both_014_htb_nd
+
+df$w_both_15plus_tb_nd <-
+  df$w_both_all_tb_nd - df$w_both_014_tb_nd
+
 
 # Write csv
 write_csv(df, 'data/combined_data.csv')

@@ -1,9 +1,9 @@
 ---
-title: "Visualizations for publications"
-author: "joe@economicsofmalaria.com"
+title: "Tables and figures for publications"
+author: "Alberto Garcia-Basteiro and Joe Brew"
 date: "January 20, 2017"
-fig_height: 5
-fig_width: 7
+fig_height: 6
+fig_width: 8
 # output: ioslides_presentation
 
 ---
@@ -35,10 +35,38 @@ source('make_wide.R')
 # Source helpers
 source('helpers.R')
 
+# Filter to only those countries with both sources
+df <- df %>% filter(have_both)
+
+# Clean up country names
+df$country[df$country == "Korea Democratic People's Republic of"] <- 'North Korea'
+df$country[df$country == "Congo the Democratic Republic of the"] <- 'Dem. Rep. Congo'
+df$country[df$country == "Tanzania United Republic of"] <- 'Tanzania'
+df$country[df$country == 'Libyan Arab Jamahiriya'] <- 'Libya'
+
+
 # Make a region specific data frame
 df_region <- df %>%
   group_by(who_region) %>%
   summarise(population = sum(gb_e_pop_num, na.rm = TRUE),
+            i_both_all_htb_nd = weighted.mean(i_both_all_htb_nd,
+                            w = gb_e_pop_num,
+                            na.rm = TRUE),
+                i_both_all_tb_nd = weighted.mean(i_both_all_tb_nd,
+                            w = gb_e_pop_num,
+                            na.rm = TRUE),
+                i_both_all_tbtotal_nd = weighted.mean(i_both_all_tbtotal_nd,
+                            w = gb_e_pop_num,
+                            na.rm = TRUE),
+                w_both_all_htb_nd = weighted.mean(w_both_all_htb_nd,
+                            w = gb_e_pop_num,
+                            na.rm = TRUE),
+                w_both_all_tb_nd = weighted.mean(w_both_all_tb_nd,
+                            w = gb_e_pop_num,
+                            na.rm = TRUE),
+                w_both_all_tbtotal_nd = weighted.mean(w_both_all_tbtotal_nd,
+                            w = gb_e_pop_num,
+                            na.rm = TRUE),
             case_fatality_rate_2015_adjusted = 
               weighted.mean(case_fatality_rate_2015_adjusted,
                             w = gb_e_pop_num,
@@ -47,34 +75,186 @@ df_region <- df %>%
               weighted.mean(relative_difference,
                             w = gb_e_pop_num,
                             na.rm = TRUE),
-            i_over_w = weighted.mean(i_over_w,
-                                     w = gb_e_pop_num,
-                                     na.rm = TRUE),
-            w_over_i = weighted.mean(w_over_i,
-                                     w = gb_e_pop_num,
-                                     na.rm = TRUE),
+            # i_over_w = weighted.mean(i_over_w,
+            #                          w = gb_e_pop_num,
+            #                          na.rm = TRUE),
+            # w_over_i = weighted.mean(w_over_i,
+            #                          w = gb_e_pop_num,
+            #                          na.rm = TRUE),
             stand_dif = weighted.mean(stand_dif,
                                       w = gb_e_pop_num,
                                       na.rm = TRUE))
+
+
   
 
 # Get world map
 world <- readOGR('shp/world', 'ne_110m_admin_0_countries')
 ```
 
+
+
 # Tables
 
 ## Descriptive tables
 
-### Global differences by: HIV, age, sex, world region
+### Global differences by:, age, sex, world region
 
 ```{r}
-make_pretty(df_region)
+
+temp <- df %>%
+  dplyr::select(country,
+                gb_e_pop_num,
+                i_both_all_htb_nd,
+                i_both_all_tb_nd,
+                i_both_all_tbtotal_nd,
+                w_both_all_htb_nd,
+                w_both_all_tb_nd,
+                w_both_all_tbtotal_nd)
+rows1 <- temp[0,]
+for (j in 3:ncol(temp)){
+  rows1[1,j] <- sum(x = temp[,j], na.rm = TRUE)
+}
+rows1$country <- rows1$gb_e_pop_num <- NULL
+
+# Make a function for side-by-siding i and w data
+side_by_side <- function(data){
+  left <- data[,(substr(names(data), 1, 2) == 'i_')]
+  right <- data[,(substr(names(data), 1, 2) == 'w_')]
+  out <- data.frame(value = NA, cbind(t(left), t(right)))
+  names(out) <- c('Value', 'IHME', 'WHO')
+  out$Value <- row.names(out)
+  row.names(out) <- NULL
+  return(out)
+}
+
+rows1 <- side_by_side(rows1)
+# Clean up names
+clean_up <- function(x){
+  ifelse(x == 'i_both_all_htb_nd',
+         'HIV+TB only',
+         ifelse(x == 'i_both_all_tb_nd',
+                'TB only',
+                ifelse(x == 'i_both_all_tbtotal_nd',
+                       'Total TB',
+                       NA)))
+}
+rows1$Value <- clean_up(rows1$Value)
+rows1$Region <- ''
+rows1 <- rows1 %>%
+  dplyr::select(Region, Value, IHME, WHO)
+################################
+# Get second part = WHO region
+temp <- df_region %>%
+  dplyr::select(who_region,
+                i_both_all_htb_nd,
+                i_both_all_tb_nd,
+                i_both_all_tbtotal_nd,
+                w_both_all_htb_nd,
+                w_both_all_tb_nd,
+                w_both_all_tbtotal_nd)
+
+results_list <- list()
+for (i in 1:nrow(temp)){
+  result <- data.frame(region = temp$who_region[i],
+                       side_by_side(temp[i,]))
+  results_list[[i]] <- result
+}
+result <- bind_rows(results_list)
+rows2 <- result
+rows2$Value <- clean_up(rows2$Value)
+names(rows2)[1] <- 'Region'
+
+
+######################
+
+#### ROWS 3 age
+
+# Haven't created these variables (w_both_15plus_htb_nd)
+
+rows3 <- expand.grid(Value = c('Total TB',
+                               'TB only',
+                               'HIV+TB only'),
+                     Region = c('Adults', 'Children'),
+                    IHME = NA,
+                    WHO = NA)
+rows3 <- rows3 %>%
+  dplyr::select(Region, Value, IHME, WHO)
+rows3[rows3$Region == 'Adults' &
+             rows3$Value == 'TB only',
+      c('IHME', 'WHO')] <-
+  c(sum(df$i_both_15plus_tb_nd, na.rm = TRUE),
+    sum(df$w_both_15plus_tb_nd, na.rm = TRUE))
+rows3[rows3$Region == 'Children' &
+             rows3$Value == 'TB only',
+      c('IHME', 'WHO')] <-
+  c(sum(df$i_both_014_tb_nd, na.rm = TRUE),
+    sum(df$w_both_014_tb_nd, na.rm = TRUE))
+
+
+rows3[rows3$Region == 'Adults' &
+             rows3$Value == 'HIV+TB only',
+      c('IHME', 'WHO')] <-
+  c(sum(df$i_both_15plus_htb_nd, na.rm = TRUE),
+    sum(df$w_both_15plus_htb_nd, na.rm = TRUE))
+rows3[rows3$Region == 'Children' &
+             rows3$Value == 'HIV+TB only',
+      c('IHME', 'WHO')] <-
+  c(sum(df$i_both_014_htb_nd, na.rm = TRUE),
+    sum(df$w_both_014_htb_nd, na.rm = TRUE))
+
+# Get totals for row 3
+rows3[rows3$Region == 'Children' &
+             rows3$Value == 'Total TB',
+      c('IHME', 'WHO')] <-
+  c(rows3 %>%
+      filter(Region == 'Children') %>%
+      summarise(IHME = sum(IHME, na.rm = TRUE),
+                WHO = sum(WHO, na.rm = TRUE)))
+rows3[rows3$Region == 'Adults' &
+             rows3$Value == 'Total TB',
+      c('IHME', 'WHO')] <-
+  c(rows3 %>%
+      filter(Region == 'Adults') %>%
+      summarise(IHME = sum(IHME, na.rm = TRUE),
+                WHO = sum(WHO, na.rm = TRUE)))
+
+x <-
+  rbind(rows1,
+      rows2,
+      rows3)
+x$x <- NA
+x$x[1:3] <- c('total')
+x$x[4:21] <- 'region'
+x$x[22:27] <- 'age'
+x <- x %>% arrange(x, Region, Value)
+x <- rbind(x[x$x == 'total',],
+           x[x$x == 'region',],
+           x[x$x == 'age',])
+x$x <- NULL
+x[1,1] <- 'Total'
+x$flag <- FALSE
+for (i in 2:nrow(x)){
+  if(x[i,1] == x[i-1, 1]){
+    x[i,'flag'] <- TRUE
+  }
+}
+x[,1][x$flag] <- ''
+x$flag <- NULL
+names(x)[1:2] <- c(' ', '  ')
+
+x$`% difference (IHME / WHO)` <- paste0(round(x$IHME / x$WHO * 100, digits = 2), '%')
+
+x$`% difference (WHO / IHME)` <- paste0(round(x$WHO / x$IHME * 100, digits = 2), '%')
+knitr::kable(x, row.names = FALSE)
+
 ```
 
 
 
-2. Table on the different methods used by WHO and IHME
+
+
+# Table on the different methods used by WHO and IHME
 
 ```{r}
 make_pretty(data_frame(` ` = 'To be filled out by Alberto'))
@@ -83,14 +263,17 @@ make_pretty(data_frame(` ` = 'To be filled out by Alberto'))
 ## Analytical tables 
 
 
-Table with model output for estimating likelihood or magnitude of difference in estimates by HIV, age, sex, and region
+Table with model output for estimating likelihood or magnitude of difference in estimates by HIV, age, sex, and region.
+
+This section is unfinished.
 
 ```{r}
 fit <- lm(stand_dif ~ who_region, 
           data = df %>%
             filter(!is.na(stand_dif),
                    is.finite(stand_dif)))
-make_pretty(tidy(fit))
+make_pretty(tidy(fit),
+            nrows = nrow(tidy(fit)))
 ```
 
 # Graphs
@@ -100,7 +283,7 @@ make_pretty(tidy(fit))
 
 ## Descriptive graphs
 
-Graph with rakings with highest absolute and standardized differences for IHME and WHO, (similar to slide 14 of current slide show, although we need to improve that one).
+Rankings of highest absolute and standardized differences for IHME and WHO.
 
 
 ```{r}
@@ -110,21 +293,23 @@ temp <- temp[c(1:10,
                (nrow(temp) - 9):nrow(temp)),]
 temp$country <- factor(temp$country,
                        levels = temp$country)
+
+# Clean up country names
 ggplot(data = temp,
        aes(x = country,
            y = w_minus_i)) +
   geom_bar(stat = 'identity',
            fill = 'darkorange',
            alpha = 0.6) +
-  theme_cism() +
+  theme_bw() +
   theme(axis.text.x = element_text(angle = 90)) +
-  ylab('Difference in deaths') +
+  ylab('Deaths') +
   xlab('Country') +
-  ggtitle('WHO minus IHME: top and bottom 10') +
-  geom_abline(yintercept = 0, alpha = 0.6, color = 'red')
+  ggtitle('Absolute differences: top and bottom 10') +
+  labs(subtitle = '> 0 = WHO\'s estimate higher than IHME\'s')
 ```
 
-```{r}
+```{r, eval = FALSE}
 temp <- df
 temp <- temp %>% filter(!is.na(stand_dif)) %>% arrange(stand_dif)
 temp <- temp[c(1:10,
@@ -137,14 +322,57 @@ ggplot(data = temp,
   geom_bar(stat = 'identity',
            fill = 'darkorange',
            alpha = 0.6) +
-  theme_cism() +
+  theme_bw() +
   theme(axis.text.x = element_text(angle = 90)) +
-  ylab('Difference in deaths') +
+  ylab('Standardized difference') +
   xlab('Country') +
   ggtitle('Standardized difference: top and bottom 10') 
 ```
 
-Map with logarithmic absolute differences or quadratic root? Similar to slide 38... with the legend + or negative depending on whether the association is towards WHO or IHME.
+
+```{r}
+temp <- df
+temp <- temp %>% filter(!is.na(adjusted_stand_dif)) %>% arrange(adjusted_stand_dif)
+temp <- temp[c(1:10,
+               (nrow(temp) - 9):nrow(temp)),]
+temp$country <- factor(temp$country,
+                       levels = temp$country)
+ggplot(data = temp,
+       aes(x = country,
+           y = adjusted_stand_dif)) +
+  geom_bar(stat = 'identity',
+           fill = 'darkorange',
+           alpha = 0.6) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab('Adjusted standardized difference') +
+  xlab('Country') +
+  ggtitle('Adjusted standardized difference: top and bottom 10') 
+```
+
+```{r}
+temp <- df
+temp <- temp %>% filter(!is.na(stand_dif_sqrt_directional)) %>% arrange(stand_dif_sqrt_directional)
+temp <- temp[c(1:10,
+               (nrow(temp) - 9):nrow(temp)),]
+temp$country <- factor(temp$country,
+                       levels = temp$country)
+ggplot(data = temp,
+       aes(x = country,
+           y = stand_dif_sqrt_directional)) +
+  geom_bar(stat = 'identity',
+           fill = 'darkorange',
+           alpha = 0.6) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab('Square-root standardized difference') +
+  xlab('Country') +
+  ggtitle('Square root standardized difference: top and bottom 10') 
+```
+
+
+# Maps
+
 
 ```{r}
 # Expand
@@ -164,6 +392,39 @@ world_tidy <-
 world_tidy <- world_tidy %>%
   filter(id != '-99',
          !is.na(country))
+```
+
+
+```{r}
+# Clean up
+# Make NA countries look cleaner with a shaded
+
+# Plot
+g1 <- 
+  ggplot(data = world_tidy,
+       aes(x = long,
+           y = lat,
+           group = group,
+           fill = stand_dif)) +
+  coord_map() +
+  geom_polygon(color = 'black',  size = 0.1) +
+  # theme_cism() +
+  scale_fill_gradient2(low = 'darkgreen',
+                       mid = 'white',
+                         high = 'darkorange',
+                       na.value = 'white',
+                       name = '') +
+  labs(x = 'Longitude',
+       y = 'Latitude',
+       title = 'Standardized difference by country') +
+  theme_bw()
+g1
+
+```
+
+```{r}
+# Clean up
+# Make NA countries look cleaner with a shaded
 
 # Plot
 g1 <- 
@@ -173,22 +434,51 @@ g1 <-
            group = group,
            fill = adjusted_stand_dif)) +
   coord_map() +
-  geom_polygon(color = 'darkorange',  size = 0.1) +
-  theme_cism() +
+  geom_polygon(color = 'black',  size = 0.1) +
+  # theme_cism() +
   scale_fill_gradient2(low = 'darkgreen',
                        mid = 'white',
                          high = 'darkorange',
+                       na.value = 'white',
                        name = '') +
   labs(x = 'Longitude',
        y = 'Latitude',
-       title = 'Adjusted standardized difference',
-       subtitle = '"adjusted_stand_dif"')
+       title = 'Adjusted standardized difference by country') +
+  theme_bw()
 g1
+
 ```
 
-Graph of correlation of both methods per country and… I don ´t know which is the most meaningful… Region? (slide 3-4)
+
+
+```{r}
+
+# Plot
+ggplot(data = world_tidy,
+       aes(x = long,
+           y = lat,
+           group = group,
+           fill = stand_dif_sqrt_directional)) +
+  coord_map() +
+  geom_polygon(color = 'black',  size = 0.1) +
+  # theme_cism() +
+  # scale_fill_continuous(low="thistle2", high="darkred", 
+  #                      guide="colorbar",na.value="white") +
+  scale_fill_gradient2(low = 'darkgreen',
+                       mid = 'white',
+                         high = 'darkorange',
+                       na.value = 'white',
+                       name = '') +
+  labs(x = 'Longitude',
+       y = 'Latitude',
+       title = 'Square root of standardized difference by country') +
+  theme_bw()
+```
+
+
 
 The below scatterplot shows the correlation between WHO (x-axis) estimates and IHME (y-axis) estimates, with each point colored by its (WHO-defined) region. 
+
 ```{r}
 cols <- colorRampPalette(brewer.pal(n = 9, name = 'Spectral'))(length(unique(df$who_region)))
 ggplot(data = df,
@@ -196,790 +486,180 @@ ggplot(data = df,
            y = i_both_all_tbtotal_nd,
            color = who_region)) +
   geom_point(alpha = 0.6) +
-  theme_cism() +
+  theme_bw() +
     scale_y_log10(limits = c(1, 150000)) +
   scale_x_log10(limits = c(1, 150000)) +
   labs(x = 'WHO',
        y = 'IHME',
-       title = 'Correlation between WHO and IHME mortality numbers',
+       title = 'Correlation between WHO and IHME mortality esimates',
        subtitle = 'Log scale, includes both TB and TB+HIV cases') +
-   # geom_smooth(method='lm', se = FALSE, alpha = 0.6) +
-  geom_abline(color = 'darkorange',
+   geom_line(stat = 'smooth', 
+             method='lm', se = FALSE, alpha = 0.6,
+               formula = y ~ x) +
+  geom_abline(color = 'black',
+              lty = 2,
               alpha = 0.6) +
   scale_color_manual(name = 'Region',
                      values = cols)
+
 ```
 
 
 ## Analytical
-6. Graph with 4 panels including scatter plots (or correlations) with association of standardized difference vs 
-a) HIV prevalence among TB cases
-b) Rifampicine resistance (MDR prevalence)
-c) CDR (case detection rate)
-d) CFR (case fatality rate?)
 
 
-# Additional materials 
-Visual additional material for the paper WHO-IHME
-1. Interactive map providing all basic indicators when clicking the country
-2. Table with the information of the interactive map.
+In the following four charts, Libya has been excluded as an outlier.
 
 
 
-
-# End
-
-(Old slides to follow)
-
-## Overall correlation
+## a) HIV prevalence among TB cases
 
 ```{r}
+# x = df$newrel_hivpos
+# y = adjusted stand_dif
+
+# Fix log adjusted stand_dif so as to have a log-usable
+# negative number
 ggplot(data = df,
-       aes(x = w_both_all_tbtotal_nd,
-           y = i_both_all_tbtotal_nd)) +
-  geom_point(color = 'darkgreen', alpha = 0.6) +
-  theme_cism() +
-  labs(x = 'WHO',
-       y = 'IHME',
-       title = 'Correlation between WHO and IHME mortality numbers',
-       subtitle = 'Log scale, includes both TB and TB+HIV cases') +
-  geom_abline(color = 'darkorange',
-              alpha = 0.6) +
-    scale_y_log10(limits = c(1, 150000)) +
-  scale_x_log10(limits = c(1, 150000)) 
+       aes(x = adjusted_stand_dif,  #stand_dif_sqrt_directional,
+           y = p_hiv_of_tb)) +
+  geom_point(alpha = 0.6) +
+  theme_bw() +
+    # scale_y_log10() +
+  labs(x = 'Adjusted standardized difference',
+       y = 'HIV prevalence among new TB cases',
+       title = 'Association of standardized difference with HIV') +
+  xlim(-10,40) +
+     geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) 
 ```
 
-## Region-specific breakdown
 
-The below scatterplot shows the correlation between WHO (x-axis) estimates and IHME (y-axis) estimates, with each point colored by its (WHO-defined) region. 
+## b) Rifampicine resistance (MDR prevalence)
+
 ```{r}
-cols <- colorRampPalette(brewer.pal(n = 9, name = 'Spectral'))(length(unique(df$who_region)))
 ggplot(data = df,
-       aes(x = w_both_all_tbtotal_nd,
-           y = i_both_all_tbtotal_nd,
-           color = who_region)) +
+       aes(x = adjusted_stand_dif,
+           y = p_mdr_new)) +
   geom_point(alpha = 0.6) +
-  theme_cism() +
-    scale_y_log10(limits = c(1, 150000)) +
-  scale_x_log10(limits = c(1, 150000)) +
-  labs(x = 'WHO',
-       y = 'IHME',
-       title = 'Correlation between WHO and IHME mortality numbers',
-       subtitle = 'Log scale, includes both TB and TB+HIV cases') +
-   # geom_smooth(method='lm', se = FALSE, alpha = 0.6) +
-  geom_abline(color = 'darkorange',
-              alpha = 0.6) +
-  scale_color_manual(name = 'Region',
-                     values = cols)
+  theme_bw() +
+    # scale_y_log10() +
+    labs(x = 'Adjusted standardized difference',
+       y = 'MDR prevalence among new cases',
+       title = 'Association of standardized difference with MDR prevalence') +
+    xlim(-10,40) +
+     geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) 
+
 ```
 
-## Region-specific breakdown 
-
-We can also fit each region's line of best fit. 
-
+## c) CDR (case detection rate)
 
 ```{r}
-cols <- colorRampPalette(brewer.pal(n = 9, name = 'Spectral'))(length(unique(df$who_region)))
 ggplot(data = df,
-       aes(x = w_both_all_tbtotal_nd,
-           y = i_both_all_tbtotal_nd,
-           color = who_region)) +
+       aes(x = adjusted_stand_dif,
+           y = gb_c_cdr)) +
   geom_point(alpha = 0.6) +
-  theme_cism() +
-    scale_y_log10(limits = c(1, 150000)) +
-  scale_x_log10(limits = c(1, 150000)) +
-  labs(x = 'WHO',
-       y = 'IHME',
-       title = 'Correlation between WHO and IHME mortality numbers',
-       subtitle = 'Log scale, includes both TB and TB+HIV cases') +
+  theme_bw() +
    geom_smooth(method='lm', se = FALSE, alpha = 0.2,
                formula = y ~ x) +
-  # geom_abline(color = 'darkorange',
-  #             alpha = 0.6) +
-  scale_color_manual(name = 'Region',
-                     values = cols)
+      labs(x = 'Adjusted standardized difference',
+       y = 'Case detection rate',
+       title = 'Association of standardized difference with case detection rate') +
+    xlim(-10,40)
+
+
+# Those countries with low case detection (oftentimes have prev survey),
+# WHO estimates more deaths than IHME
+```
+
+## d) CFR (case fatality rate)
+
+```{r}
+ggplot(data = df,
+       aes(x = adjusted_stand_dif,
+           y = case_fatality_rate_2015_adjusted)) +
+  geom_point(alpha = 0.6) +
+  theme_bw() +
+  labs(x = 'Adjusted standardized difference',
+       y = 'Case fatality rate',
+       title = 'Association of standardized difference with case fatality rate') +
+  xlim(-10, 40) +
+     geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) 
+
 ```
 
 
-## Region-specific breakdown 
-
-
-We can also examine relative difference in estimates, by WHO region. TIn the below violin charts, the jittered points represent each country.
+# Prevalence survey's effect
 
 ```{r}
-temp <- df %>%
-  filter(!is.na(who_region))
-cols <- colorRampPalette(brewer.pal(n = 9, name = 'Spectral'))(length(unique(df$who_region)))
-
-  
-ggplot(data = temp,
+ggplot(data = df,
        aes(x = who_region,
-           y = relative_difference)) +
-  geom_jitter(aes(color = who_region), #color = 'darkgreen', 
-              alpha = 0.8) +
-  geom_violin(aes(fill = who_region),
-    # fill = 'darkorange', 
-    alpha = 0.3) +
-  theme_cism() +
-  labs(x = 'WHO Region',
-       y = 'Relative difference',
-       title = 'Variance in estimates between WHO and IHME',
-       subtitle = 'Absolute difference divided by maximum value') +
-  scale_color_manual(name = '',
-                     values = cols) +
-  scale_fill_manual(name = '',
-                    values = cols) +
-  guides(color = FALSE,
-         fill = FALSE)
+           y = stand_dif)) +
+  geom_boxplot() +
+  ylim(-10, 20) +
+  geom_jitter(alpha = 0.3, size = 0.5) +
+  theme_bw() +
+  labs(x = 'Region',
+       y = 'Standardized difference',
+       title = 'Standardized difference by WHO region')
+  # geom_violin()
 ```
 
-
-## Region-specific breakdown 
-
-
-The above metric of relative variance is _independent_ of which source is higher. Here, we visualize variance by examining the ratio of IHME deaths over WHO deaths.
-
-```{r}
-temp <- df %>%
-  filter(!is.na(who_region))
-cols <- colorRampPalette(brewer.pal(n = 9, name = 'Spectral'))(length(unique(df$who_region)))
-
-g <- 
-  ggplot(data = temp,
-       aes(x = who_region,
-           y = i_over_w)) +
-  geom_jitter(aes(color = who_region), #color = 'darkgreen', 
-              alpha = 0.8) +
-  geom_violin(aes(fill = who_region),
-    # fill = 'darkorange', 
-    alpha = 0.3) +
-  theme_cism() +
-  labs(x = 'WHO Region',
-       y = 'Relative difference',
-       title = 'TB+TB/HIV deaths: IHME divided by WHO',
-       subtitle = '') +
-  scale_color_manual(name = '',
-                     values = cols) +
-  scale_fill_manual(name = '',
-                    values = cols) +
-  guides(color = FALSE,
-         fill = FALSE)
-print(g)
-```
-
-
-## Region-specific breakdown 
-
-
-For ease of interpretation, we remove those outliers.
-
-```{r}
-g <- g +
-  ylim(0,5)
-g
-```
-
-
-## Region-specific breakdown 
-
-As a complement to the above, we can also examine the ratio of WHO deaths over IHME deaths.
-
-```{r}
-
-temp <- df %>%
-  filter(!is.na(who_region))
-cols <- colorRampPalette(brewer.pal(n = 9, name = 'Spectral'))(length(unique(df$who_region)))
-
-g <- 
-  ggplot(data = temp,
-       aes(x = who_region,
-           y = w_over_i)) +
-  geom_jitter(aes(color = who_region), #color = 'darkgreen', 
-              alpha = 0.8) +
-  geom_violin(aes(fill = who_region),
-    # fill = 'darkorange', 
-    alpha = 0.3) +
-  theme_cism() +
-  labs(x = 'WHO Region',
-       y = 'Relative difference',
-       title = 'TB+TB/HIV deaths: WHO divided by IHME',
-       subtitle = '') +
-  scale_color_manual(name = '',
-                     values = cols) +
-  scale_fill_manual(name = '',
-                    values = cols) +
-  guides(color = FALSE,
-         fill = FALSE)
-print(g)
-```
-
-# By country
-
-## By country
-
-In the below chart we identify those countries for whom the ratio of IHME-estimated deaths (TB + HIV/TB) is greatest (top 10) and least (bottom 10). 
-
-```{r}
-temp <- df
-temp <- temp %>% filter(!is.na(i_over_w)) %>% arrange(i_over_w)
-temp <- temp[c(1:10,
-               (nrow(temp) - 9):nrow(temp)),]
-temp$country <- factor(temp$country,
-                       levels = temp$country)
-ggplot(data = temp,
-       aes(x = country,
-           y = i_over_w)) +
-  geom_bar(stat = 'identity',
-           fill = 'darkorange',
-           alpha = 0.6) +
-  theme_cism() +
-  theme(axis.text.x = element_text(angle = 90)) +
-  ylab('Ratio') +
-  xlab('Country') +
-  ggtitle('IHME over WHO: top and bottom 10')
-```
-
-
-## By country
-
-As a complement to the above, we can examine the inverse: WHO deaths over IHME deaths.
-
-
-```{r}
-temp <- df
-temp <- temp %>% filter(!is.na(w_over_i)) %>% arrange(w_over_i)
-temp <- temp[c(1:10,
-               (nrow(temp) - 9):nrow(temp)),]
-temp$country <- factor(temp$country,
-                       levels = temp$country)
-ggplot(data = temp,
-       aes(x = country,
-           y = w_over_i)) +
-  geom_bar(stat = 'identity',
-           fill = 'darkorange',
-           alpha = 0.6) +
-  theme_cism() +
-  theme(axis.text.x = element_text(angle = 90)) +
-  ylab('Ratio') +
-  xlab('Country') +
-  ggtitle('WHO over IHME: top and bottom 10')
-```
-
-
-## By country
-
-Rather than ratios, we can also examine absolute differences. The below bar chart shows those countries with the greatest absolute difference (IHME estimated deaths minus WHO estimated deaths).
-
-```{r}
-temp <- df
-temp <- temp %>% filter(!is.na(i_minus_w)) %>% arrange(i_minus_w)
-temp <- temp[c(1:10,
-               (nrow(temp) - 9):nrow(temp)),]
-temp$country <- factor(temp$country,
-                       levels = temp$country)
-ggplot(data = temp,
-       aes(x = country,
-           y = i_minus_w)) +
-  geom_bar(stat = 'identity',
-           fill = 'darkorange',
-           alpha = 0.6) +
-  theme_cism() +
-  theme(axis.text.x = element_text(angle = 90)) +
-  ylab('Difference in deaths') +
-  xlab('Country') +
-  ggtitle('IHME minus WHO: top and bottom 10') +
-  geom_abline(yintercept = 0, alpha = 0.6, color = 'red')
-
-```
-
-
-## By country
-
-As a complement to the above, we can do WHO deaths minus IHME deaths.
-
-```{r}
-temp <- df
-temp <- temp %>% filter(!is.na(w_minus_i)) %>% arrange(w_minus_i)
-temp <- temp[c(1:10,
-               (nrow(temp) - 9):nrow(temp)),]
-temp$country <- factor(temp$country,
-                       levels = temp$country)
-ggplot(data = temp,
-       aes(x = country,
-           y = w_minus_i)) +
-  geom_bar(stat = 'identity',
-           fill = 'darkorange',
-           alpha = 0.6) +
-  theme_cism() +
-  theme(axis.text.x = element_text(angle = 90)) +
-  ylab('Difference in deaths') +
-  xlab('Country') +
-  ggtitle('WHO minus IHME: top and bottom 10') +
-  geom_abline(yintercept = 0, alpha = 0.6, color = 'red')
-```
-
-
-## By country
-
-All of the above are biased by small numbers (ie, countries with very few cases are most likely to have the most extreme ratios). Accordingly, we can instead examine an indicator suggested by Frank: The number of reported cases, divided by deaths.
-
-This indicator is, in fact, two indicators. One is the reported cases divided by deaths (per the WHO), and the other is per the IHME. The below histograms show the country-specific distribution of these indicators.
-
-
-## By country
-
-Here is the distribution of the cases over deaths indicators.
-
-```{r}
-g1 <- 
-  ggplot(data = df,
-       aes(x = w_cases_over_deaths)) +
-  geom_histogram(color = 'darkgreen', 
-                 fill = 'darkorange',
-                 alpha = 0.6) +
-  theme_cism() +
-  xlab('Cases over deaths') +
-  ylab('Count') +
-  ggtitle('Cases over deaths (WHO)')
-g2 <- 
-  ggplot(data = df,
-       aes(x = i_cases_over_deaths)) +
-  geom_histogram(color = 'darkgreen', 
-                 fill = 'darkorange',
-                 alpha = 0.6) +
-  theme_cism() +
-  xlab('Cases over deaths') +
-  ylab('Count') +
-  ggtitle('Cases over deaths (IHME)')
-Rmisc::multiplot(g1, g2)
-```
-
-
-
-## By country
-
-When we examine the cases over deaths metrics at the country specific level as well. As per before, we'll take the top and bottom 10 countries only.
-
-```{r}
-temp <- df
-temp <- temp %>% filter(!is.na(w_cases_over_deaths)) %>% arrange(w_cases_over_deaths)
-temp <- temp[c(1:10,
-               (nrow(temp) - 9):nrow(temp)),]
-temp$country <- factor(temp$country,
-                       levels = temp$country)
-ggplot(data = temp,
-       aes(x = country,
-           y = w_cases_over_deaths)) +
-  geom_bar(stat = 'identity',
-           fill = 'darkorange',
-           alpha = 0.6) +
-  theme_cism() +
-  theme(axis.text.x = element_text(angle = 90)) +
-  ylab('Ratio') +
-  xlab('Country') +
-  ggtitle('Cases per WHO deaths: top and bottom 10') 
-```
-
-
-## By country
-
-```{r}
-temp <- df
-temp <- temp %>% filter(!is.na(i_cases_over_deaths)) %>% arrange(i_cases_over_deaths)
-temp <- temp[c(1:10,
-               (nrow(temp) - 9):nrow(temp)),]
-temp$country <- factor(temp$country,
-                       levels = temp$country)
-ggplot(data = temp,
-       aes(x = country,
-           y = i_cases_over_deaths)) +
-  geom_bar(stat = 'identity',
-           fill = 'darkorange',
-           alpha = 0.6) +
-  theme_cism() +
-  theme(axis.text.x = element_text(angle = 90)) +
-  ylab('Ratio') +
-  xlab('Country') +
-  ggtitle('Cases per IHME deaths: top and bottom 10') 
-```
-
-# Rifampicin resistance
-
-## Rifampicin resistant TB 
-
-The below chart shows the estimated percentage of new TB cases with rifampicin resistant TB (x-axis) and the cases per WHO deaths (y-axis):
+# Association of prevalence survey and standardized difference
 
 ```{r}
 ggplot(data = df,
-       aes(x = e_rr_pct_new,
-          y = w_cases_over_deaths)) +
-  geom_point(color = 'darkorange') +
-  theme_cism() +
-  labs(x = 'Percentage rifampicin resistant',
-       y = 'Ratio of cases over deaths',
-       title = 'Resistance and cases over deaths',
-       subtitle = 'WHO')
+       aes(x = factor(prevsurvey),
+           y = stand_dif)) +
+  geom_boxplot() +
+  ylim(-10, 20) +
+  geom_jitter(alpha = 0.3) +
+  theme_bw() +
+  labs(x = 'Prevalence survey',
+       y = 'Standardized difference',
+       title = 'Association of prevalence survey and standardized difference')
+  # geom_violin()
 ```
 
+## Modeling
 
-## Rifampicin resistant TB 
-
-The below chart is identical, but using IHME deaths rather than WHO.
-
+Linear regression to estimate effect of prevalence survey on absolute difference in cases (WHO minus IHME), adjusting for region.
 
 ```{r}
-ggplot(data = df,
-       aes(x = e_rr_pct_new,
-          y = i_cases_over_deaths)) +
-  geom_point(color = 'darkorange') +
-  theme_cism() +
-  labs(x = 'Percentage rifampicin resistant',
-       y = 'Ratio of cases over deaths',
-       title = 'Resistance and cases over deaths',
-       subtitle = 'IHME')
+# fit <- glm(prevsurvey ~ stand_dif, data = df %>% filter(is.finite(stand_dif)), family = binomial('logit'))
+# summary(fit)
+# exp(coef(fit))
+# exp(confint(fit))
+# 
+fit <- lm(w_minus_i ~ prevsurvey + who_region, data = df %>% filter(is.finite(w_minus_i)))
+make_pretty(tidy(summary(fit)), nrows = nrow(tidy(summary(fit))))
 ```
 
-
-## Rifampicin resistant TB 
-
-We can also examine the same x-axis (resistance), but relative to other indicators.
+95% confidence intervals
 
 ```{r}
-ggplot(data = df,
-       aes(x = e_rr_pct_new,
-          y = i_over_w)) +
-  geom_point(color = 'darkorange') +
-  theme_cism() +
-  labs(x = 'Percentage rifampicin resistant',
-       y = 'Ratio: IHME over WHO deaths',
-       title = 'Resistance and differential deaths',
-       subtitle = 'IHME over WHO')
-
-```
-
-## Rifampicin resistant TB 
-
-```{r}
-ggplot(data = df,
-       aes(x = e_rr_pct_new,
-          y = w_over_i)) +
-  geom_point(color = 'darkorange') +
-  theme_cism() +
-  labs(x = 'Percentage rifampicin resistant',
-       y = 'Ratio: WHO over IHME deaths',
-       title = 'Resistance and differential deaths',
-       subtitle = 'WHO over IHME')
-```
-
-## Rifampicin resistant TB 
-
-
-```{r}
-ggplot(data = df,
-       aes(x = e_rr_pct_new,
-          y = relative_difference)) +
-  geom_point(color = 'darkorange') +
-  theme_cism() +
-  labs(x = 'Percentage rifampicin resistant',
-       y = 'Ratio',
-       title = 'Resistance and differential deaths',
-       subtitle = 'Relative difference: absolute difference over maximum of two estimates')
-```
-
-## Rifampicin resistant TB 
-
-
-```{r}
-ggplot(data = df,
-       aes(x = e_rr_pct_new,
-          y = absolute_difference)) +
-  geom_point(color = 'darkorange') +
-  theme_cism() +
-  labs(x = 'Percentage rifampicin resistant',
-       y = 'Deaths',
-       title = 'Resistance and differential deaths',
-       subtitle = 'Absolute difference in WHO / IHME estimates')
-```
-
-# Maps
-
-## Comparative choropleths
-
-```{r}
-# Expand
-world_tidy <- broom::tidy(world, region = 'iso_a3')
-# Join in data
-world@data <-
-  left_join(x = world@data,
-            y = df,
-            by = c('iso_a3' = 'iso3'))
-# Join to the tidy version too
-world_tidy <-
-  left_join(x = world_tidy,
-            y = df,
-            by = c('id' = 'iso3'))
-
-# Remove those which are unknown
-world_tidy <- world_tidy %>%
-  filter(id != '-99',
-         !is.na(country))
-
-# Plot
-g1 <- 
-  ggplot(data = world_tidy,
-       aes(x = long,
-           y = lat,
-           group = group,
-           fill = i_both_all_tbtotal_nd)) +
-  coord_map() +
-  geom_polygon(color = 'darkorange',  size = 0.1) +
-  theme_cism() +
-  scale_fill_gradient2(#low = 'darkgreen',
-                       #mid = 'white',
-                      #   high = 'darkorange',
-                       name = '') +
-  labs(x = 'Longitude',
-       y = 'Latitude',
-       title = 'IHME',
-       subtitle = 'Number of deaths (TB + TB/HIV)')
-g2 <- 
-  ggplot(data = world_tidy,
-       aes(x = long,
-           y = lat,
-           group = group,
-           fill = w_both_all_tbtotal_nd)) +
-  coord_map() +
-  geom_polygon(color = 'darkorange',  size = 0.1) +
-  theme_cism() +
-  scale_fill_gradient2(#low = 'darkgreen',
-                       #mid = 'white',
-                      #   high = 'darkorange',
-                       name = '') +
-  labs(x = 'Longitude',
-       y = 'Latitude',
-       title = 'WHO',
-       subtitle = 'Number of deaths (TB + TB/HIV)') 
-
-
-```
-
-### IHME
-
-```{r}
-g1
-```
-
-### WHO
-
-```{r}
-g2
-```
-
-## Choropleth of absolute differences
-
-```{r}
-ggplot(data = world_tidy,
-       aes(x = long,
-           y = lat,
-           group = group,
-           fill = absolute_difference)) +
-  coord_map() +
-  geom_polygon(color = 'darkorange',  size = 0.1) +
-  theme_cism() +
-  scale_fill_gradient2(#low = 'darkgreen',
-                       #mid = 'white',
-                      #   high = 'darkorange',
-                       name = '') +
-  labs(x = 'Longitude',
-       y = 'Latitude',
-       title = 'Absolute difference',
-       subtitle = 'Number of deaths (TB + TB/HIV)') 
+make_pretty(tidy(confint(fit)))
 ```
 
 
-## Choropleth of relative differences
 
-```{r}
-ggplot(data = world_tidy,
-       aes(x = long,
-           y = lat,
-           group = group,
-           fill = relative_difference)) +
-  coord_map() +
-  geom_polygon(color = 'darkorange',  size = 0.1) +
-  theme_cism() +
-  scale_fill_gradient2(#low = 'darkgreen',
-                       #mid = 'white',
-                      #   high = 'darkorange',
-                       name = '') +
-  labs(x = 'Longitude',
-       y = 'Latitude',
-       title = 'Relative difference',
-       subtitle = 'Number of deaths (TB + TB/HIV)') 
-```
 
-## Choropleth of cases over deaths (WHO)
 
-```{r}
-ggplot(data = world_tidy,
-       aes(x = long,
-           y = lat,
-           group = group,
-           fill = w_cases_over_deaths)) +
-  coord_map() +
-  geom_polygon(color = 'darkorange',  size = 0.1) +
-  theme_cism() +
-  scale_fill_gradient2(#low = 'darkgreen',
-                       #mid = 'white',
-                      #   high = 'darkorange',
-                       name = '') +
-  labs(x = 'Longitude',
-       y = 'Latitude',
-       title = 'Cases per WHO deaths',
-       subtitle = 'Ratio') 
-```
 
-## Choropleth of cases over deaths (WHO)
-
-```{r}
-ggplot(data = world_tidy,
-       aes(x = long,
-           y = lat,
-           group = group,
-           fill = i_cases_over_deaths)) +
-  coord_map() +
-  geom_polygon(color = 'darkorange',  size = 0.1) +
-  theme_cism() +
-  scale_fill_gradient2(#low = 'darkgreen',
-                       #mid = 'white',
-                      #   high = 'darkorange',
-                       name = '') +
-  labs(x = 'Longitude',
-       y = 'Latitude',
-       title = 'Cases per IHME deaths',
-       subtitle = 'Ratio') 
-
-```
-
-# Interactive maps
+# Interactive map
 
 ## Relative difference (function of maximum estimate)
 
-```{r}
-library(leaflet)
-qpal <- colorQuantile("YlGn", world@data$relative_difference, n = 5, na.color = "#bdbdbd")
-
-popup <- paste0("<strong>Country: </strong>",
-                    world@data$country,
-                    "<br><strong>WHO: </strong>",
-                    round(world@data$w_both_all_tbtotal_nd, digits = 2),
-                    "<br><strong>IHME: </strong>",
-                    round(world@data$i_both_all_tbtotal_nd, digits = 2),
-                "<br><strong>Relative difference: </strong>",
-                round(world@data$relative_difference, digits = 3),
-                "<br><strong>WHO / IHME: </strong>",
-                round(world@data$w_over_i, digits = 3),
-                "<br><strong>IHME / WHO: </strong>",
-                round(world@data$i_over_w, digits = 3),
-                "<br><strong>Absolute difference: </strong>",
-                round(world@data$absolute_difference, digits = 3),
-                "<br><strong>Cases per WHO deaths </strong>",
-                round(world@data$w_cases_over_deaths, digits = 3),
-                "<br><strong>Cases per IHME deaths </strong>",
-                round(world@data$i_cases_over_deaths, digits = 3))
-
-leaflet(data = world) %>%
-  addProviderTiles("Stamen.TonerBackground") %>% 
-  setView(lng = mean(coordinates(world)[,1]),
-          lat = mean(coordinates(world)[,2]),
-          zoom = 2) %>%
-  # clearShapes() %>% 
-  # clearControls() %>% 
-  addPolygons(data = world, fillColor = ~qpal(relative_difference), fillOpacity = 0.7, 
-              color = "white", weight = 2, popup = popup) %>%
-  addLegend(pal = qpal, values = ~relative_difference, opacity = 0.9,
-            position = 'bottomright', 
-            title = paste0('Relative difference', "<br>"))
-```
-
-
-## Relative difference (WHO over IHME)
-
-Above 0 means that the WHO estimates n percentage higher than the IHME. Vice-versa.
+(Unfinished)
 
 ```{r}
 library(leaflet)
-world@data$indicator <- (world@data$w_over_i * 100) - 100
+world@data$indicator <- (world@data$adjusted_stand_dif)
 qpal <- colorNumeric("Spectral", 
                      world@data$indicator, na.color = "#bdbdbd")
 
-popup <- paste0("<strong>Country: </strong>",
-                    world@data$country,
-                    "<br><strong>WHO: </strong>",
-                    round(world@data$w_both_all_tbtotal_nd, digits = 2),
-                    "<br><strong>IHME: </strong>",
-                    round(world@data$i_both_all_tbtotal_nd, digits = 2),
-                "<br><strong>Relative difference: </strong>",
-                round(world@data$relative_difference, digits = 3),
-                "<br><strong>WHO / IHME: </strong>",
-                round(world@data$w_over_i, digits = 3),
-                "<br><strong>IHME / WHO: </strong>",
-                round(world@data$i_over_w, digits = 3),
-                "<br><strong>Absolute difference: </strong>",
-                round(world@data$absolute_difference, digits = 3),
-                "<br><strong>Cases per WHO deaths </strong>",
-                round(world@data$w_cases_over_deaths, digits = 3),
-                "<br><strong>Cases per IHME deaths </strong>",
-                round(world@data$i_cases_over_deaths, digits = 3))
-
-leaflet(data = world) %>%
-  addProviderTiles("Stamen.TonerBackground") %>% 
-  setView(lng = mean(coordinates(world)[,1]),
-          lat = mean(coordinates(world)[,2]),
-          zoom = 2) %>%
-  # clearShapes() %>% 
-  # clearControls() %>% 
-  addPolygons(data = world, fillColor = ~qpal(indicator), fillOpacity = 0.7, 
-              color = "white", weight = 2, popup = popup) %>%
-  addLegend(pal = qpal, values = ~indicator, opacity = 0.9,
-            position = 'bottomright', 
-            title = paste0('WHO / IHME * 100 - 100', "<br>"))
-```
-
-
-## Relative difference (WHO over IHME)
-
-
-In the previous chart, it may seem that there are no negative values. This is not the case. It's simply that when the WHO and IHME differ in the extremes, it pulls in one direction: 
-
-```{r}
-ggplot(data = world@data,
-       aes(x = indicator)) +
-  geom_histogram(fill = 'darkorange',
-                 color = 'darkgreen',
-                 alpha = 0.6) +
-  theme_cism() +
-  geom_vline(xintercept = 0,
-             color = 'red',
-             alpha = 0.6) +
-  xlab('Ratio of WHO over IHME times 100 minus 100') +
-  ylab('Countries') +
-  ggtitle('Distribution of ratio of WHO over IHME times 100 minus 100')
-```
-
-## Absolute differences
-
-WHO minus IHME instead of WHO divided by IHME.
-
-```{r}
-
-# qpal <- colorQuantile("RdYlGn", 
-#                       world@data$i_minus_w, 
-#                       n = 5, 
-#                       na.color = "#bdbdbd")
-qpal <- colorNumeric("RdYlGn", 
-                      world@data$i_minus_w, 
-                      na.color = "#bdbdbd")
 
 popup <- paste0("<strong>Country: </strong>",
                     world@data$country,
@@ -995,10 +675,9 @@ popup <- paste0("<strong>Country: </strong>",
                 round(world@data$i_over_w, digits = 3),
                 "<br><strong>Absolute difference: </strong>",
                 round(world@data$absolute_difference, digits = 3),
-                "<br><strong>Cases per WHO deaths </strong>",
-                round(world@data$w_cases_over_deaths, digits = 3),
-                "<br><strong>Cases per IHME deaths </strong>",
-                round(world@data$i_cases_over_deaths, digits = 3))
+                "<br><strong>Adjusted standardized difference: </strong>",
+                round(world@data$adjusted_stand_dif, digits = 3)
+                )
 
 leaflet(data = world) %>%
   addProviderTiles("Stamen.TonerBackground") %>% 
@@ -1008,69 +687,10 @@ leaflet(data = world) %>%
   # clearShapes() %>% 
   # clearControls() %>% 
   addPolygons(data = world, 
-              fillColor = ~qpal(i_minus_w), fillOpacity = 0.7, 
+              fillColor = ~qpal(adjusted_stand_dif), fillOpacity = 0.7, 
               color = "white", weight = 2, popup = popup) %>%
-  addLegend(pal = qpal, values = ~i_minus_w, opacity = 0.9,
-            position = 'bottomright', 
-            title = paste0('IHME - WHO', "<br>"))
-```
-
-
-## Absolute differences
-
-
-The previous map may appear overwhelmingly green (ie, that most of the countries have a near 0 difference). This is due to a difference in scale (ie, very few extreme observations). We can get a more granular look at things by taking the quadratic root of our indicator (next).
-
-## Absolute differences
-
-
-```{r}
-# qpal <- colorQuantile("RdYlGn", 
-#                       world@data$i_minus_w, 
-#                       n = 5, 
-#                       na.color = "#bdbdbd")
-world@data$i_minus_w_sqrt <- (abs(world@data$i_minus_w)) ^ (1/4)
-sign  <- ifelse(world@data$i_minus_w >= 0,
-                TRUE,
-                FALSE)
-world@data$i_minus_w_sqrt <- 
-  world@data$i_minus_w_sqrt *
-  ifelse(sign, 1, -1)
-qpal <- colorNumeric("RdYlGn", 
-                      world@data$i_minus_w_sqrt, 
-                      na.color = "#bdbdbd")
-
-popup <- paste0("<strong>Country: </strong>",
-                    world@data$country,
-                    "<br><strong>WHO: </strong>",
-                    round(world@data$w_both_all_tbtotal_nd, digits = 2),
-                    "<br><strong>IHME: </strong>",
-                    round(world@data$i_both_all_tbtotal_nd, digits = 2),
-                "<br><strong>Relative difference: </strong>",
-                round(world@data$relative_difference, digits = 3),
-                "<br><strong>WHO / IHME: </strong>",
-                round(world@data$w_over_i, digits = 3),
-                "<br><strong>IHME / WHO: </strong>",
-                round(world@data$i_over_w, digits = 3),
-                "<br><strong>Absolute difference: </strong>",
-                round(world@data$absolute_difference, digits = 3),
-                "<br><strong>Cases per WHO deaths </strong>",
-                round(world@data$w_cases_over_deaths, digits = 3),
-                "<br><strong>Cases per IHME deaths </strong>",
-                round(world@data$i_cases_over_deaths, digits = 3))
-
-leaflet(data = world) %>%
-  addProviderTiles("Stamen.TonerBackground") %>% 
-  setView(lng = mean(coordinates(world)[,1]),
-          lat = mean(coordinates(world)[,2]),
-          zoom = 2) %>%
-  # clearShapes() %>% 
-  # clearControls() %>% 
-  addPolygons(data = world, 
-              fillColor = ~qpal(i_minus_w_sqrt), fillOpacity = 0.7, 
-              color = "white", weight = 2, popup = popup) %>%
-  addLegend(pal = qpal, values = ~i_minus_w_sqrt, opacity = 0.9,
-            position = 'bottomright', 
-            title = paste0('IHME - WHO (4 root)', "<br>"))
-
+  addLegend(pal = qpal, 
+            values = ~indicator, opacity = 0.9,
+            position = 'bottomright',
+            title = paste0('Adjusted standardized difference', "<br>"))
 ```
