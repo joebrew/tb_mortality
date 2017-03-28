@@ -1,7 +1,7 @@
 ---
 title: "Tables and figures for publications"
 author: "Alberto Garcia-Basteiro and Joe Brew"
-date: "January 20, 2017"
+date: "March 28, 2017"
 fig_height: 6
 fig_width: 8
 # output: ioslides_presentation
@@ -34,15 +34,6 @@ source('make_wide.R')
 
 # Source helpers
 source('helpers.R')
-
-# Filter to only those countries with both sources
-df <- df %>% filter(have_both)
-
-# Clean up country names
-df$country[df$country == "Korea Democratic People's Republic of"] <- 'North Korea'
-df$country[df$country == "Congo the Democratic Republic of the"] <- 'Dem. Rep. Congo'
-df$country[df$country == "Tanzania United Republic of"] <- 'Tanzania'
-df$country[df$country == 'Libyan Arab Jamahiriya'] <- 'Libya'
 
 
 # Make a region specific data frame
@@ -192,6 +183,53 @@ rows3[rows3$Region == 'Children' &
     sum(df$w_both_014_tb_nd, na.rm = TRUE))
 
 
+## By sex
+by_sex <- 
+  expand.grid(Value = c('Total TB',
+                               'TB only',
+                               'HIV+TB only'),
+                     Region = c('Male', 'Female'),
+                    IHME = NA,
+                    WHO = NA,
+              Dif = NA)
+by_sex[by_sex$Value == 'Total TB' &
+              by_sex$Region == 'Female',
+       c('IHME', 'WHO')] <- c(df$i_f_15plus_tb_nd +
+                                df$i_f_15plus_htb_nd,
+                              df$w_f_15plus_tb_nd +
+                                df$w_f_15plus_htb_nd)
+by_sex[by_sex$Value == 'Total TB' &
+              by_sex$Region == 'Male',
+       c('IHME', 'WHO')] <- c(df$i_m_15plus_tb_nd +
+                                df$i_m_15plus_htb_nd,
+                              df$w_m_15plus_tb_nd +
+                                df$w_m_15plus_htb_nd)
+
+by_sex[by_sex$Value == 'TB only' &
+              by_sex$Region == 'Female',
+       c('IHME', 'WHO')] <- c(df$i_f_15plus_tb_nd,
+                              df$w_f_15plus_tb_nd)
+by_sex[by_sex$Value == 'TB only' &
+              by_sex$Region == 'Male',
+       c('IHME', 'WHO')] <- c(df$i_m_15plus_tb_nd,
+                              df$w_m_15plus_tb_nd)
+
+by_sex[by_sex$Value == 'HIV+TB only' &
+              by_sex$Region == 'Female',
+       c('IHME', 'WHO')] <- c(df$i_f_15plus_htb_nd,
+                              df$w_f_15plus_htb_nd)
+by_sex[by_sex$Value == 'HIV+TB only' &
+              by_sex$Region == 'Male',
+       c('IHME', 'WHO')] <- c(df$i_m_15plus_htb_nd,
+                              df$w_m_15plus_htb_nd)
+  
+# df$i_f_15plus_tb_nd
+# df$i_f_15plus_htb_nd
+# df$w_f_15plus_tb_nd
+# df$w_f_15plus_htb_nd
+
+
+
 rows3[rows3$Region == 'Adults' &
              rows3$Value == 'HIV+TB only',
       c('IHME', 'WHO')] <-
@@ -220,17 +258,20 @@ rows3[rows3$Region == 'Adults' &
                 WHO = sum(WHO, na.rm = TRUE)))
 
 x <-
-  rbind(rows1,
+  bind_rows(rows1,
       rows2,
-      rows3)
+      rows3,
+      by_sex)
 x$x <- NA
-x$x[1:3] <- c('total')
+x$x[1:3] <- 'total'
 x$x[4:21] <- 'region'
 x$x[22:27] <- 'age'
+x$x[28:33] <- 'sex'
 x <- x %>% arrange(x, Region, Value)
 x <- rbind(x[x$x == 'total',],
            x[x$x == 'region',],
-           x[x$x == 'age',])
+           x[x$x == 'age',],
+           x[x$x == 'sex',])
 x$x <- NULL
 x[1,1] <- 'Total'
 x$flag <- FALSE
@@ -243,22 +284,36 @@ x[,1][x$flag] <- ''
 x$flag <- NULL
 names(x)[1:2] <- c(' ', '  ')
 
-x$`% difference (IHME / WHO)` <- paste0(round(x$IHME / x$WHO * 100, digits = 2), '%')
 
-x$`% difference (WHO / IHME)` <- paste0(round(x$WHO / x$IHME * 100, digits = 2), '%')
+x$Dif <- x$WHO / x$IHME
+x$`% difference (WHO / IHME)` <- x$Dif
+x$Dif <- x$IHME / x$WHO
+x$`% difference (IHME / WHO)` <- x$Dif
+x$`% difference (WHO / IHME)` <-
+  (x$`% difference (WHO / IHME)` * 100) - 100
+x$`% difference (IHME / WHO)` <-
+  (x$`% difference (IHME / WHO)` * 100) - 100
+
+x$`% difference (IHME / WHO)` <- paste0(round(x$`% difference (IHME / WHO)`, digits = 2), '%')
+x$`% difference (WHO / IHME)` <- paste0(round(x$`% difference (WHO / IHME)`, digits = 2), '%')
+
+# Add a absolute difference column
+x$Dif <- abs(x$IHME - x$WHO)
+
+row.names(x) <- 1:nrow(x)
+x <- x[c(1:3, # total
+         c(4:6, 25:27), # adults then children
+         c(28:33),# add by sex here
+         7:24), # by region
+       ]
+
+x$IHME <- round(x$IHME)
+x$WHO <- round(x$WHO)
+
 knitr::kable(x, row.names = FALSE)
 
 ```
 
-
-
-
-
-# Table on the different methods used by WHO and IHME
-
-```{r}
-make_pretty(data_frame(` ` = 'To be filled out by Alberto'))
-```
 
 ## Analytical tables 
 
@@ -370,6 +425,28 @@ ggplot(data = temp,
   ggtitle('Square root standardized difference: top and bottom 10') 
 ```
 
+
+```{r}
+# Standardized difference for incidence
+temp <- df
+temp <- temp %>% filter(!is.na(stand_dif_inc_adj)) %>% arrange(stand_dif_inc_adj) %>%
+  filter(is.finite(stand_dif_inc_adj))
+temp <- temp[c(1:10,
+               (nrow(temp) - 9):nrow(temp)),]
+temp$country <- factor(temp$country,
+                       levels = temp$country)
+ggplot(data = temp,
+       aes(x = country,
+           y = stand_dif_inc_adj)) +
+  geom_bar(stat = 'identity',
+           fill = 'darkorange',
+           alpha = 0.6) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab('Adjusted standardized incidence difference') +
+  xlab('Country') +
+  ggtitle('Adjusted standardized incidence difference: top and bottom 10') 
+```
 
 # Maps
 
@@ -553,7 +630,26 @@ ggplot(data = df,
 
 ```
 
-## c) CDR (case detection rate)
+
+## b.i) Rifampicine resistance (MDR prevalence using reported cases)
+
+```{r}
+ggplot(data = df,
+       aes(x = adjusted_stand_dif,
+           y = reported_mdr)) +
+  geom_point(alpha = 0.6) +
+  theme_bw() +
+    # scale_y_log10() +
+    labs(x = 'Adjusted standardized difference',
+       y = 'MDR prevalence among new cases',
+       title = 'Association of standardized difference with MDR prevalence (reported)') +
+    xlim(-10,40) +
+     geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) 
+
+```
+
+## c) CDR (case detection rate per WHO)
 
 ```{r}
 ggplot(data = df,
@@ -571,6 +667,55 @@ ggplot(data = df,
 
 # Those countries with low case detection (oftentimes have prev survey),
 # WHO estimates more deaths than IHME
+```
+
+
+## c.i) CDR (case detection rate per IHME)
+
+```{r}
+# Create an IHME cdr variable
+df$cdr_ihme <- 
+  # numerator: addition of new cases hiv and hiv+tb from ihme 
+  df$ihme_incidence_both_allages_totaltb_number / 
+  # denominator: (df$c_newinc + df$ret_nrel) 
+  (df$c_newinc + df$ret_nrel)* 100
+  
+
+ggplot(data = df,
+       aes(x = adjusted_stand_dif,
+           y = cdr_ihme)) +
+  geom_point(alpha = 0.6) +
+  theme_bw() +
+   geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) +
+      labs(x = 'Adjusted standardized difference',
+       y = 'Case detection rate',
+       title = 'Association of standardized difference with case detection rate') +
+    xlim(-10,40)
+
+
+# Those countries with low case detection (oftentimes have prev survey),
+# WHO estimates more deaths than IHME
+```
+
+## c.ii) Correlation between different case detections rates
+
+```{r}
+library(ggrepel)
+ggplot(data = df,
+       aes(x = gb_c_cdr,
+           y = cdr_ihme)) +
+  geom_point(alpha = 0.3) +
+  theme_bw() +
+   geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) +
+      labs(x = 'WHO case detection rate',
+       y = 'IHME case detection rate',
+       title = 'Association of two case detection rates') +
+  geom_text(aes(label = country),
+                   size = 3,
+            alpha = 0.6)
+
 ```
 
 ## d) CFR (case fatality rate)
@@ -642,10 +787,6 @@ make_pretty(tidy(summary(fit)), nrows = nrow(tidy(summary(fit))))
 ```{r}
 make_pretty(tidy(confint(fit)))
 ```
-
-
-
-
 
 
 # Interactive map

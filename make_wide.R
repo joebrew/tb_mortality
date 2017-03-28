@@ -119,7 +119,15 @@ albertify <- function(x){
     
     # rate_number
     rate_number <- x_split[x_split %in% c('number', 'rate', 'incidence')]
-    if('incidence' %in% rate_number){
+
+    if('incidence' %in% rate_number &
+       'number' %in% rate_number){
+      rate_number <- 'incidence_number'
+    } else {
+      if('incidence' %in% rate_number &
+         'rate' %in% rate_number){
+        rate_number <- 'incidence_rate'
+      } else if('incidence' %in% rate_number){
       rate_number <- 'in'
     } else {
       if(length(rate_number) == 0){
@@ -131,6 +139,7 @@ albertify <- function(x){
         rate_number <- 'mr'
       }
     }
+  }
     
     # Combine together
     new_name <- 
@@ -153,6 +162,8 @@ okay_to_change <- which(!names(df) %in%
                             'iso3',
                             'who_region') &
                           !grepl('gb_', names(df)))
+okay_to_change <- okay_to_change[okay_to_change != which(names(df) == 'ihme_incidence_both_allages_totaltb_number')]
+df <- data.frame(df)
 for (j in okay_to_change){
   if(!grepl('have', names(df)[j])){
     the_old_name <- names(df)[j]
@@ -347,6 +358,45 @@ df$w_both_15plus_htb_nd <-
 df$w_both_15plus_tb_nd <-
   df$w_both_all_tb_nd - df$w_both_014_tb_nd
 
+
+# Create total columns
+df$i_f_15plus_tbtotal_nd <- df$i_f_15plus_tb_nd +
+  df$i_f_15plus_htb_nd
+df$w_f_15plus_tbtotal_nd <- df$w_f_15plus_tb_nd +
+  df$w_f_15plus_htb_nd
+
+
+# Create standardized difference with incidence instead of mortality
+df <- df %>%
+  mutate(stand_dif_inc= (w_both_all_tbtotal_nd-i_both_all_tbtotal_nd) / 
+           (c_newinc)) # new cases
+
+# Filter to only those countries with both sources
+df <- df %>% filter(have_both)
+
+# Clean up country names
+df$country[df$country == "Korea Democratic People's Republic of"] <- 'North Korea'
+df$country[df$country == "Congo the Democratic Republic of the"] <- 'Dem. Rep. Congo'
+df$country[df$country == "Tanzania United Republic of"] <- 'Tanzania'
+df$country[df$country == 'Libyan Arab Jamahiriya'] <- 'Libya'
+df$country[df$country == "Lao People's Democratic Republic"] <- 'Laos'
+
+# Adjust standardized difference for incidence
+df$stand_dif_inc_adj <- df$stand_dif_inc / max(df$stand_dif_inc, na.rm = TRUE) * 100
+
+# Get proportion of reported mdr
+df$reported_mdr <- df$mdr_rr / df$c_newinc * 100
+
+# Correct prevsurvey
+df$prevsurvey[df$country %in%
+                c('Bangladesh',
+                  'Eritrea',
+                  'Kenya',
+                  'Malaysia',
+                  'Philippines',
+                  'Viet Nam')] <- 0
+
+# Make an overall ihme incidence using hiv and hiv tb
 
 # Write csv
 write_csv(df, 'data/combined_data.csv')

@@ -77,6 +77,7 @@ for (i in 1:n_wide){
 }
 
 # Overwrite
+long <- ihme
 ihme <- wide; rm(wide)
 
 
@@ -210,6 +211,11 @@ names(ihme) <- paste0('ihme_', names(ihme))
 
 ihme$country_number <- ihme$ihme_location_id
 
+# Create a total ihme incidence
+ihme$ihme_incidence_both_allages_totaltb_number <-
+  ihme$ihme_incidence_both_allages_tuberculosis_number +
+  ihme$ihme_incidence_both_allages_hiv_aids_tuberculosis_number
+
 # Make column names compatible with who
 names(ihme) <- gsub('hiv_aids', 'h', names(ihme))
 names(ihme) <- gsub('male', 'm', names(ihme))
@@ -224,10 +230,10 @@ names(ihme) <- gsub('__', '_', names(ihme))
 ihme <-
   ihme %>% filter(!ihme_location_name %in% 'Global')
 
-# Remove any incidence number column
-remove_these <- which(grepl('incidence', names(ihme)) &
-                        grepl('number', names(ihme)))
-ihme <- ihme[,!(1:ncol(ihme)) %in% remove_these]
+# # Remove any incidence number column
+# remove_these <- which(grepl('incidence', names(ihme)) &
+#                         grepl('number', names(ihme)))
+# ihme <- ihme[,!(1:ncol(ihme)) %in% remove_these]
 
 # Remove all the excess junk
 z <- unlist(lapply(ls(), function(x){class(get(x))[1]}))
