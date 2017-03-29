@@ -193,41 +193,35 @@ by_sex <-
               Dif = NA)
 by_sex[by_sex$Value == 'Total TB' &
               by_sex$Region == 'Female',
-       c('IHME', 'WHO')] <- c(df$i_f_15plus_tb_nd +
-                                df$i_f_15plus_htb_nd,
-                              df$w_f_15plus_tb_nd +
-                                df$w_f_15plus_htb_nd)
+       c('IHME', 'WHO')] <- c(sum(df$i_f_15plus_tb_nd,na.rm = TRUE) +
+                                sum(df$i_f_15plus_htb_nd,na.rm = TRUE),
+                              sum(df$w_f_15plus_tb_nd,na.rm = TRUE) +
+                                sum(df$w_f_15plus_htb_nd,na.rm = TRUE))
 by_sex[by_sex$Value == 'Total TB' &
               by_sex$Region == 'Male',
-       c('IHME', 'WHO')] <- c(df$i_m_15plus_tb_nd +
-                                df$i_m_15plus_htb_nd,
-                              df$w_m_15plus_tb_nd +
-                                df$w_m_15plus_htb_nd)
+       c('IHME', 'WHO')] <- c(sum(df$i_m_15plus_tb_nd,na.rm = TRUE) +
+                                sum(df$i_m_15plus_htb_nd,na.rm = TRUE),
+                              sum(df$w_m_15plus_tb_nd,na.rm = TRUE) +
+                                sum(df$w_m_15plus_htb_nd,na.rm = TRUE))
 
 by_sex[by_sex$Value == 'TB only' &
               by_sex$Region == 'Female',
-       c('IHME', 'WHO')] <- c(df$i_f_15plus_tb_nd,
-                              df$w_f_15plus_tb_nd)
+       c('IHME', 'WHO')] <- c(sum(df$i_f_15plus_tb_nd,na.rm = TRUE),
+                              sum(df$w_f_15plus_tb_nd,na.rm = TRUE))
 by_sex[by_sex$Value == 'TB only' &
               by_sex$Region == 'Male',
-       c('IHME', 'WHO')] <- c(df$i_m_15plus_tb_nd,
-                              df$w_m_15plus_tb_nd)
+       c('IHME', 'WHO')] <- c(sum(df$i_m_15plus_tb_nd,na.rm = TRUE),
+                              sum(df$w_m_15plus_tb_nd,na.rm = TRUE))
 
 by_sex[by_sex$Value == 'HIV+TB only' &
               by_sex$Region == 'Female',
-       c('IHME', 'WHO')] <- c(df$i_f_15plus_htb_nd,
-                              df$w_f_15plus_htb_nd)
+       c('IHME', 'WHO')] <- c(sum(df$i_f_15plus_htb_nd,na.rm = TRUE),
+                              sum(df$w_f_15plus_htb_nd,na.rm = TRUE))
 by_sex[by_sex$Value == 'HIV+TB only' &
               by_sex$Region == 'Male',
-       c('IHME', 'WHO')] <- c(df$i_m_15plus_htb_nd,
-                              df$w_m_15plus_htb_nd)
+       c('IHME', 'WHO')] <- c(sum(df$i_m_15plus_htb_nd,na.rm = TRUE),
+                              sum(df$w_m_15plus_htb_nd,na.rm = TRUE))
   
-# df$i_f_15plus_tb_nd
-# df$i_f_15plus_htb_nd
-# df$w_f_15plus_tb_nd
-# df$w_f_15plus_htb_nd
-
-
 
 rows3[rows3$Region == 'Adults' &
              rows3$Value == 'HIV+TB only',
@@ -903,5 +897,40 @@ ggplot(data = x,
   geom_polygon(fill = 'darkred') +
   theme_map() +
   coord_map()
+```
 
+## Correlation coefficients
+
+Correlation of adjusted stand diff with a) HIV prevalence, CDR by both, CFR, MDR prevalence.
+
+```{r, echo = TRUE}
+cor(df$adjusted_stand_dif, df$newrel_hivpos, use = 'complete.obs')
+cor(df$adjusted_stand_dif, df$gb_c_cdr, use = 'complete.obs')
+cor(df$adjusted_stand_dif, df$cdr_ihme, use = 'complete.obs')
+cor(df$adjusted_stand_dif, df$case_fatality_rate_2014, use = 'complete.obs')
+cor(df$adjusted_stand_dif, df$case_fatality_rate_2012_to_2014, use = 'complete.obs')
+cor(df$adjusted_stand_dif, df$case_fatality_rate_2015, use = 'complete.obs')
+cor(df$adjusted_stand_dif, df$case_fatality_rate_2014_new, use = 'complete.obs')
+cor(df$adjusted_stand_dif, df$case_fatality_rate_2012_to_2014_new, use = 'complete.obs')
+cor(df$adjusted_stand_dif, df$case_fatality_rate_2015_new, use = 'complete.obs')
+cor(df$adjusted_stand_dif, df$case_fatality_rate_2015_adjusted, use = 'complete.obs')
+cor(df$adjusted_stand_dif, df$p_mdr_new, use = 'complete.obs')
+cor(df$adjusted_stand_dif, df$reported_mdr, use = 'complete.obs')
+```
+
+## Hypothesis testing on prevalence survey
+
+Does region affect likelihood of having a prevalence survey?
+
+```{r, echo = TRUE}
+xt <- table(df$prevsurvey, df$who_region)
+xt
+chisq.test(xt)
+```
+
+Does having a prev survey affect the stand diff?
+
+```{r, echo = TRUE}
+t.test(x = df$stand_dif[df$prevsurvey == 0],
+       y = df$stand_dif[df$prevsurvey == 1])
 ```
