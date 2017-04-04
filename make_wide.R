@@ -384,6 +384,37 @@ df$country[df$country == "Lao People's Democratic Republic"] <- 'Laos'
 # Adjust standardized difference for incidence
 df$stand_dif_inc_adj <- df$stand_dif_inc / max(df$stand_dif_inc, na.rm = TRUE) * 100
 
+# ab
+# (a - b) / (a + b) where a is the estimated number of deaths by WHO and b the estimated number of deaths by IHME.
+df$ab <- (df$w_both_all_tbtotal_nd - df$i_both_all_tbtotal_nd) +
+  (df$w_both_all_tbtotal_nd + df$i_both_all_tbtotal_nd)
+
+
+# Get ranking of ab
+df <- df %>%
+  mutate(dummy = 1) %>%
+  arrange(desc(ab)) %>%
+  mutate(rank_ab = cumsum(dummy)) %>%
+  dplyr::select(-dummy)
+
+# Make percentile of ab
+df <- df %>%
+  mutate(percentile_ab = percent_rank(ab) * 100)
+
+# Make log of ab
+df <- df %>%
+  mutate(log_ab = log(ab))
+
+# Make ab as percentage of max
+df$adjusted_ab <- df$ab / max(df$ab, na.rm = TRUE) * 100
+
+# Make an adjusted log stand dif with negatives
+df$ab_sqrt_directional <- sqrt(abs(df$ab))
+df$ab_sqrt_directional <- ifelse(df$ab > 0,
+                                        df$ab_sqrt_directional,
+                                        df$ab_sqrt_directional * -1)
+
+
 # Get proportion of reported mdr
 df$reported_mdr <- df$mdr_rr / df$c_newinc * 100
 

@@ -331,6 +331,8 @@ make_pretty(tidy(fit),
 
 ## Descriptive graphs
 
+### Standardized difference
+
 Rankings of highest absolute and standardized differences for IHME and WHO.
 
 
@@ -419,6 +421,8 @@ ggplot(data = temp,
 ```
 
 
+### Standardized difference for incidence
+
 ```{r}
 # Standardized difference for incidence
 temp <- df
@@ -440,6 +444,73 @@ ggplot(data = temp,
   xlab('Country') +
   ggtitle('Adjusted standardized incidence difference: top and bottom 10') 
 ```
+
+### AB metric (a-b) / (a+b)
+
+Rankings of highest absolute and standardized differences for IHME and WHO.
+
+```{r, eval = FALSE}
+temp <- df
+temp <- temp %>% filter(!is.na(ab)) %>% arrange(ab)
+temp <- temp[c(1:10,
+               (nrow(temp) - 9):nrow(temp)),]
+temp$country <- factor(temp$country,
+                       levels = temp$country)
+ggplot(data = temp,
+       aes(x = country,
+           y = ab)) +
+  geom_bar(stat = 'identity',
+           fill = 'darkorange',
+           alpha = 0.6) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab('AB') +
+  xlab('Country') +
+  ggtitle('AB: top and bottom 10') 
+```
+
+
+```{r}
+temp <- df
+temp <- temp %>% filter(!is.na(adjusted_ab)) %>% arrange(adjusted_ab)
+temp <- temp[c(1:10,
+               (nrow(temp) - 9):nrow(temp)),]
+temp$country <- factor(temp$country,
+                       levels = temp$country)
+ggplot(data = temp,
+       aes(x = country,
+           y = adjusted_ab)) +
+  geom_bar(stat = 'identity',
+           fill = 'darkorange',
+           alpha = 0.6) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab('Adjusted AB') +
+  xlab('Country') +
+  ggtitle('Adjusted AB: top and bottom 10') 
+```
+
+```{r}
+temp <- df
+temp <- temp %>% filter(!is.na(ab_sqrt_directional)) %>% arrange(ab_sqrt_directional)
+temp <- temp[c(1:10,
+               (nrow(temp) - 9):nrow(temp)),]
+temp$country <- factor(temp$country,
+                       levels = temp$country)
+ggplot(data = temp,
+       aes(x = country,
+           y = ab_sqrt_directional)) +
+  geom_bar(stat = 'identity',
+           fill = 'darkorange',
+           alpha = 0.6) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab('Square-root AB') +
+  xlab('Country') +
+  ggtitle('Square root AB: top and bottom 10') 
+```
+
+
 
 # Maps
 
@@ -571,6 +642,30 @@ ggplot(data = world_tidy,
 ```
 
 
+```{r}
+
+# Plot
+ggplot(data = world_tidy,
+       aes(x = long,
+           y = lat,
+           group = group,
+           fill = ab_sqrt_directional)) +
+  coord_map() +
+  geom_polygon(color = 'black',  size = 0.1) +
+  # theme_cism() +
+  # scale_fill_continuous(low="thistle2", high="darkred", 
+  #                      guide="colorbar",na.value="white") +
+  scale_fill_gradient2(low = 'darkgreen',
+                       mid = 'white',
+                         high = 'darkorange',
+                       na.value = 'white',
+                       name = '') +
+  labs(x = 'Longitude',
+       y = 'Latitude',
+       title = 'Square root of AB by country') +
+  theme_bw()
+```
+
 
 The below scatterplot shows the correlation between WHO (x-axis) estimates and IHME (y-axis) estimates, with each point colored by its (WHO-defined) region. 
 
@@ -600,7 +695,7 @@ ggplot(data = df,
 ```
 
 
-## Analytical
+## Analytical for adjusted_stand_dif
 
 
 In the following four charts, Libya has been excluded as an outlier.
@@ -707,7 +802,8 @@ ggplot(data = df,
       labs(x = 'Adjusted standardized difference',
        y = 'Case detection rate',
        title = 'Association of standardized difference with case detection rate') +
-    xlim(-10,40)
+    xlim(-10,40) +
+  ylim(0, 100)
 
 
 # Those countries with low case detection (oftentimes have prev survey),
@@ -757,29 +853,29 @@ ggplot(data = df,
 ```{r}
 ggplot(data = df,
        aes(x = who_region,
-           y = stand_dif)) +
+           y = adjusted_stand_dif)) +
   geom_boxplot() +
   ylim(-10, 20) +
   geom_jitter(alpha = 0.3, size = 0.5) +
   theme_bw() +
   labs(x = 'Region',
-       y = 'Standardized difference',
-       title = 'Standardized difference by WHO region')
+       y = 'Adjusted standardized difference',
+       title = 'Adjusted standardized difference by WHO region')
   # geom_violin()
 ```
 
 ```{r}
 ggplot(data = df,
        aes(x = who_region,
-           y = stand_dif)) +
+           y = adjusted_stand_dif)) +
   # geom_boxplot() +
   ylim(-10, 20) +
-  geom_jitter(alpha = 0.3, size = 0.5) +
   theme_bw() +
   labs(x = 'Region',
-       y = 'Standardized difference',
-       title = 'Standardized difference by WHO region') +
-  geom_violin()
+       y = 'Adjusted standardized difference',
+       title = 'Adjusted standardized difference by WHO region') +
+  geom_violin() +
+  geom_jitter(alpha = 0.3, size = 0.5) 
 ```
 
 # Association of prevalence survey and standardized difference
@@ -787,16 +883,187 @@ ggplot(data = df,
 ```{r}
 ggplot(data = df,
        aes(x = factor(prevsurvey),
-           y = stand_dif)) +
+           y = adjusted_stand_dif)) +
   geom_boxplot() +
   ylim(-10, 20) +
   geom_jitter(alpha = 0.3) +
   theme_bw() +
   labs(x = 'Prevalence survey',
-       y = 'Standardized difference',
-       title = 'Association of prevalence survey and standardized difference')
+       y = 'Adjusted standardized difference',
+       title = 'Association of prevalence survey and adjusted standardized difference')
   # geom_violin()
 ```
+
+
+## Analytical for adjusted_ab
+
+
+## a) HIV prevalence among TB cases
+
+```{r}
+# x = df$newrel_hivpos
+# y = adjusted ab
+
+# Fix log adjusted ab so as to have a log-usable
+# negative number
+ggplot(data = df,
+       aes(x = adjusted_ab,  #ab_sqrt_directional,
+           y = p_hiv_of_tb)) +
+  geom_point(alpha = 0.6) +
+  theme_bw() +
+    # scale_y_log10() +
+  labs(x = 'Adjusted AB',
+       y = 'HIV prevalence among new TB cases',
+       title = 'Association of AB with HIV') +
+  xlim(-10,40) +
+     geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) 
+```
+
+
+## b) Rifampicine resistance (MDR prevalence)
+
+```{r}
+ggplot(data = df,
+       aes(x = adjusted_ab,
+           y = p_mdr_new)) +
+  geom_point(alpha = 0.6) +
+  theme_bw() +
+    # scale_y_log10() +
+    labs(x = 'Adjusted AB',
+       y = 'MDR prevalence among new cases',
+       title = 'Association of AB with MDR prevalence') +
+    xlim(-10,40) +
+     geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) 
+
+```
+
+
+## b.i) Rifampicine resistance (MDR prevalence using reported cases)
+
+```{r}
+ggplot(data = df,
+       aes(x = adjusted_ab,
+           y = reported_mdr)) +
+  geom_point(alpha = 0.6) +
+  theme_bw() +
+    # scale_y_log10() +
+    labs(x = 'Adjusted AB',
+       y = 'MDR prevalence among new cases',
+       title = 'Association of adjusted AB with MDR prevalence (reported)') +
+    xlim(-10,40) +
+     geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) 
+
+```
+
+## c) CDR (case detection rate per WHO)
+
+```{r}
+ggplot(data = df,
+       aes(x = adjusted_ab,
+           y = gb_c_cdr)) +
+  geom_point(alpha = 0.6) +
+  theme_bw() +
+   geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) +
+      labs(x = 'Adjusted AB',
+       y = 'Case detection rate',
+       title = 'Association of AB with case detection rate') +
+    xlim(-10,40)
+
+```
+
+
+## c.i) CDR (case detection rate per IHME)
+
+```{r}
+# Create an IHME cdr variable
+df$cdr_ihme <- 
+  (df$c_newinc + df$ret_nrel) / 
+  df$ihme_incidence_both_allages_totaltb_number   * 100
+  
+
+ggplot(data = df,
+       aes(x = adjusted_ab,
+           y = cdr_ihme)) +
+  geom_point(alpha = 0.6) +
+  theme_bw() +
+   geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) +
+      labs(x = 'Adjusted AB difference',
+       y = 'Case detection rate',
+       title = 'Association of adjusted AB with case detection rate') +
+    xlim(-10,40) +
+  ylim(0, 100)
+
+```
+
+## d) CFR (case fatality rate)
+
+```{r}
+ggplot(data = df,
+       aes(x = adjusted_ab,
+           y = case_fatality_rate_2015_adjusted)) +
+  geom_point(alpha = 0.6) +
+  theme_bw() +
+  labs(x = 'Adjusted AB',
+       y = 'Case fatality rate',
+       title = 'Association of adjusted AB with case fatality rate') +
+  xlim(-10, 40) +
+     geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) 
+
+```
+
+
+# Prevalence survey's effect
+
+```{r}
+ggplot(data = df,
+       aes(x = who_region,
+           y = adjusted_ab)) +
+  geom_boxplot() +
+  ylim(-10, 20) +
+  geom_jitter(alpha = 0.3, size = 0.5) +
+  theme_bw() +
+  labs(x = 'Region',
+       y = 'Adjusted AB',
+       title = 'Adjusted AB by WHO region')
+  # geom_violin()
+```
+
+```{r}
+ggplot(data = df,
+       aes(x = who_region,
+           y = adjusted_ab)) +
+  # geom_boxplot() +
+  ylim(-10, 20) +
+  theme_bw() +
+  labs(x = 'Region',
+       y = 'Adjusted AB',
+       title = 'Adjusted AB') +
+  geom_violin() +
+  geom_jitter(alpha = 0.3, size = 0.5) 
+```
+
+# Association of prevalence survey and standardized difference
+
+```{r}
+ggplot(data = df,
+       aes(x = factor(prevsurvey),
+           y = adjusted_ab)) +
+  geom_boxplot() +
+  ylim(-10, 20) +
+  geom_jitter(alpha = 0.3) +
+  theme_bw() +
+  labs(x = 'Prevalence survey',
+       y = 'Adjusted AB',
+       title = 'Association of prevalence survey and adjusted AB')
+  # geom_violin()
+```
+
 
 ## Modeling
 
@@ -809,6 +1076,21 @@ Linear regression to estimate effect of prevalence survey on absolute difference
 # exp(confint(fit))
 # 
 fit <- lm(w_minus_i ~ prevsurvey + who_region, data = df %>% filter(is.finite(w_minus_i)))
+make_pretty(tidy(summary(fit)), nrows = nrow(tidy(summary(fit))))
+```
+
+95% confidence intervals
+
+```{r}
+make_pretty(tidy(confint(fit)))
+```
+
+
+Linear regression to estimate effect of prevalence survey on adjusted standardized difference in cases, adjusting for region.
+
+```{r}
+
+fit <- lm(adjusted_stand_dif ~ prevsurvey + who_region, data = df %>% filter(is.finite(w_minus_i)))
 make_pretty(tidy(summary(fit)), nrows = nrow(tidy(summary(fit))))
 ```
 
@@ -928,9 +1210,9 @@ xt
 chisq.test(xt)
 ```
 
-Does having a prev survey affect the stand diff?
+Does having a prev survey affect the adjusted stand diff?
 
 ```{r, echo = TRUE}
-t.test(x = df$stand_dif[df$prevsurvey == 0],
-       y = df$stand_dif[df$prevsurvey == 1])
+t.test(x = df$adjusted_stand_dif[df$prevsurvey == 0],
+       y = df$adjusted_stand_dif[df$prevsurvey == 1])
 ```
