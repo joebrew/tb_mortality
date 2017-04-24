@@ -386,7 +386,7 @@ df$stand_dif_inc_adj <- df$stand_dif_inc / max(df$stand_dif_inc, na.rm = TRUE) *
 
 # ab
 # (a - b) / (a + b) where a is the estimated number of deaths by WHO and b the estimated number of deaths by IHME.
-df$ab <- (df$w_both_all_tbtotal_nd - df$i_both_all_tbtotal_nd) +
+df$ab <- (df$w_both_all_tbtotal_nd - df$i_both_all_tbtotal_nd) /
   (df$w_both_all_tbtotal_nd + df$i_both_all_tbtotal_nd)
 
 
@@ -431,3 +431,4 @@ df$prevsurvey[df$country %in%
 
 # Write csv
 write_csv(df, 'data/combined_data.csv')
+

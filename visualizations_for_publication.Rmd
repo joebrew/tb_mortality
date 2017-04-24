@@ -445,6 +445,32 @@ ggplot(data = temp,
   ggtitle('Adjusted standardized incidence difference: top and bottom 10') 
 ```
 
+
+```{r, eval = FALSE}
+temp <- df
+temp <- temp %>% filter(!is.na(stand_dif_inc)) %>% arrange(stand_dif_inc)
+temp <- temp[c(1:10,
+               (nrow(temp) - 9):nrow(temp)),]
+temp$country <- factor(temp$country,
+                       levels = temp$country)
+ggplot(data = temp,
+       aes(x = country,
+           y = stand_dif_inc)) +
+  geom_bar(stat = 'identity',
+           fill = 'darkorange',
+           alpha = 0.6) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab('Stan. dif. inc') +
+  xlab('Country') +
+  ggtitle('Standardized incidence difference: top and bottom 10') 
+```
+
+
+
+
+
+
 ### AB metric (a-b) / (a+b)
 
 Rankings of highest absolute and standardized differences for IHME and WHO.
@@ -702,7 +728,7 @@ In the following four charts, Libya has been excluded as an outlier.
 
 
 
-## a) HIV prevalence among TB cases
+### a) HIV prevalence among TB cases
 
 ```{r}
 # x = df$newrel_hivpos
@@ -725,7 +751,7 @@ ggplot(data = df,
 ```
 
 
-## b) Rifampicine resistance (MDR prevalence)
+### b) Rifampicine resistance (MDR prevalence)
 
 ```{r}
 ggplot(data = df,
@@ -744,7 +770,7 @@ ggplot(data = df,
 ```
 
 
-## b.i) Rifampicine resistance (MDR prevalence using reported cases)
+### b.i) Rifampicine resistance (MDR prevalence using reported cases)
 
 ```{r}
 ggplot(data = df,
@@ -762,7 +788,7 @@ ggplot(data = df,
 
 ```
 
-## c) CDR (case detection rate per WHO)
+### c) CDR (case detection rate per WHO)
 
 ```{r}
 ggplot(data = df,
@@ -783,7 +809,7 @@ ggplot(data = df,
 ```
 
 
-## c.i) CDR (case detection rate per IHME)
+### c.i) CDR (case detection rate per IHME)
 
 ```{r}
 # Create an IHME cdr variable
@@ -810,7 +836,7 @@ ggplot(data = df,
 # WHO estimates more deaths than IHME
 ```
 
-## c.ii) Correlation between different case detections rates
+### c.ii) Correlation between different case detections rates
 
 ```{r}
 library(ggrepel)
@@ -830,7 +856,7 @@ ggplot(data = df,
 
 ```
 
-## d) CFR (case fatality rate)
+### d) CFR (case fatality rate)
 
 ```{r}
 ggplot(data = df,
@@ -848,7 +874,7 @@ ggplot(data = df,
 ```
 
 
-# Prevalence survey's effect
+### Prevalence survey's effect
 
 ```{r}
 ggplot(data = df,
@@ -878,7 +904,7 @@ ggplot(data = df,
   geom_jitter(alpha = 0.3, size = 0.5) 
 ```
 
-# Association of prevalence survey and standardized difference
+### Association of prevalence survey and standardized difference
 
 ```{r}
 ggplot(data = df,
@@ -895,10 +921,191 @@ ggplot(data = df,
 ```
 
 
+
+
+## Analytical for stand_dif_inc_adj
+
+
+
+### a) HIV prevalence among TB cases
+
+```{r}
+# x = df$newrel_hivpos
+# y = adjusted stand_dif
+
+# Fix log adjusted stand_dif so as to have a log-usable
+# negative number
+ggplot(data = df,
+       aes(x = stand_dif_inc_adj,  #stand_dif_sqrt_directional,
+           y = p_hiv_of_tb)) +
+  geom_point(alpha = 0.6) +
+  theme_bw() +
+    # scale_y_log10() +
+  labs(x = 'Adj. stand. dif. in inc.',
+       y = 'HIV prevalence among new TB cases',
+       title = 'Association of Adj. stand. dif. in inc. with HIV') +
+  xlim(-10,40) +
+     geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) 
+```
+
+
+### b) Rifampicine resistance (MDR prevalence)
+
+```{r}
+ggplot(data = df,
+       aes(x = stand_dif_inc_adj,
+           y = p_mdr_new)) +
+  geom_point(alpha = 0.6) +
+  theme_bw() +
+    # scale_y_log10() +
+    labs(x = 'Adj. stand. dif. in inc.',
+       y = 'MDR prevalence among new cases',
+       title = 'Association of Adj. stand. dif. in inc. with MDR prevalence') +
+    xlim(-10,40) +
+     geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) 
+
+```
+
+
+### b.i) Rifampicine resistance (MDR prevalence using reported cases)
+
+```{r}
+ggplot(data = df,
+       aes(x = stand_dif_inc_adj,
+           y = reported_mdr)) +
+  geom_point(alpha = 0.6) +
+  theme_bw() +
+    # scale_y_log10() +
+    labs(x = 'Adj. stand. dif. in inc.',
+       y = 'MDR prevalence among new cases',
+       title = 'Association of Adj. stand. dif. in inc. with MDR prevalence (reported)') +
+    xlim(-10,40) +
+     geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) 
+
+```
+
+### c) CDR (case detection rate per WHO)
+
+```{r}
+ggplot(data = df,
+       aes(x = stand_dif_inc_adj,
+           y = gb_c_cdr)) +
+  geom_point(alpha = 0.6) +
+  theme_bw() +
+   geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) +
+      labs(x = 'Adj. stand. dif. in inc.',
+       y = 'Case detection rate',
+       title = 'Association of Adj. stand. dif. in inc.') +
+    xlim(-10,40)
+
+
+# Those countries with low case detection (oftentimes have prev survey),
+# WHO estimates more deaths than IHME
+```
+
+
+### c.i) CDR (case detection rate per IHME)
+
+```{r}
+# Create an IHME cdr variable
+df$cdr_ihme <- 
+  (df$c_newinc + df$ret_nrel) / 
+  df$ihme_incidence_both_allages_totaltb_number   * 100
+  
+
+ggplot(data = df,
+       aes(x = stand_dif_inc_adj,
+           y = cdr_ihme)) +
+  geom_point(alpha = 0.6) +
+  theme_bw() +
+   geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) +
+      labs(x = 'Adj. stand. dif. in inc.',
+       y = 'Case detection rate',
+       title = 'Association of Adj. stand. dif. in inc. with case detection rate') +
+    xlim(-10,40) +
+  ylim(0, 100)
+
+
+# Those countries with low case detection (oftentimes have prev survey),
+# WHO estimates more deaths than IHME
+```
+
+### d) CFR (case fatality rate)
+
+```{r}
+ggplot(data = df,
+       aes(x = stand_dif_inc_adj,
+           y = case_fatality_rate_2015_adjusted)) +
+  geom_point(alpha = 0.6) +
+  theme_bw() +
+  labs(x = 'Adj. stand. dif. in inc.',
+       y = 'Case fatality rate',
+       title = 'Association of Adj. stand. dif. in inc. with case fatality rate') +
+  xlim(-10, 40) +
+     geom_smooth(method='lm', se = FALSE, alpha = 0.2,
+               formula = y ~ x) 
+
+```
+
+
+### Prevalence survey's effect
+
+```{r}
+ggplot(data = df,
+       aes(x = who_region,
+           y = stand_dif_inc_adj)) +
+  geom_boxplot() +
+  ylim(-10, 20) +
+  geom_jitter(alpha = 0.3, size = 0.5) +
+  theme_bw() +
+  labs(x = 'Region',
+       y = 'Adj. stand. dif. in inc.',
+       title = 'Adj. stand. dif. in inc. by WHO region')
+  # geom_violin()
+```
+
+```{r}
+ggplot(data = df,
+       aes(x = who_region,
+           y = stand_dif_inc_adj)) +
+  # geom_boxplot() +
+  ylim(-10, 20) +
+  theme_bw() +
+  labs(x = 'Region',
+       y = 'Adj. stand. dif. in inc.',
+       title = 'Adj. stand. dif. in inc. by WHO region') +
+  geom_violin() +
+  geom_jitter(alpha = 0.3, size = 0.5) 
+```
+
+### Association of prevalence survey and standardized difference
+
+```{r}
+ggplot(data = df,
+       aes(x = factor(prevsurvey),
+           y = stand_dif_inc_adj)) +
+  geom_boxplot() +
+  ylim(-10, 20) +
+  geom_jitter(alpha = 0.3) +
+  theme_bw() +
+  labs(x = 'Prevalence survey',
+       y = 'Adj. stand. dif. in inc.',
+       title = 'Association of prevalence survey and Adj. stand. dif. in inc.')
+  # geom_violin()
+```
+
+
+
+
 ## Analytical for adjusted_ab
 
 
-## a) HIV prevalence among TB cases
+### a) HIV prevalence among TB cases
 
 ```{r}
 # x = df$newrel_hivpos
@@ -921,7 +1128,7 @@ ggplot(data = df,
 ```
 
 
-## b) Rifampicine resistance (MDR prevalence)
+### b) Rifampicine resistance (MDR prevalence)
 
 ```{r}
 ggplot(data = df,
@@ -940,7 +1147,7 @@ ggplot(data = df,
 ```
 
 
-## b.i) Rifampicine resistance (MDR prevalence using reported cases)
+### b.i) Rifampicine resistance (MDR prevalence using reported cases)
 
 ```{r}
 ggplot(data = df,
@@ -958,7 +1165,7 @@ ggplot(data = df,
 
 ```
 
-## c) CDR (case detection rate per WHO)
+### c) CDR (case detection rate per WHO)
 
 ```{r}
 ggplot(data = df,
@@ -976,7 +1183,7 @@ ggplot(data = df,
 ```
 
 
-## c.i) CDR (case detection rate per IHME)
+### c.i) CDR (case detection rate per IHME)
 
 ```{r}
 # Create an IHME cdr variable
@@ -1000,7 +1207,7 @@ ggplot(data = df,
 
 ```
 
-## d) CFR (case fatality rate)
+### d) CFR (case fatality rate)
 
 ```{r}
 ggplot(data = df,
@@ -1018,7 +1225,7 @@ ggplot(data = df,
 ```
 
 
-# Prevalence survey's effect
+### Prevalence survey's effect
 
 ```{r}
 ggplot(data = df,
@@ -1048,7 +1255,7 @@ ggplot(data = df,
   geom_jitter(alpha = 0.3, size = 0.5) 
 ```
 
-# Association of prevalence survey and standardized difference
+### Association of prevalence survey and standardized difference
 
 ```{r}
 ggplot(data = df,
