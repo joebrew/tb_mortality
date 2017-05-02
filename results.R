@@ -101,3 +101,116 @@ table(x$w_both_all_tbtotal_nd > x$i_both_all_tbtotal_nd)
 #and case fatality rate (r= -0.19, 95%CI). 
 
 #There is a moderate correlation with case detection rate (as estimated by WHO), (r= -0.32, 95%CI), which disappears when using CDR based on IHME number of incident cases (r= 0.06, 95%CI: ) (figure 2). Those countries which have had a national prevalence survey have a higher adjusted standardized difference than those without a prevalence survey (3.5 vs 0.88 respectively). In other words, in those countries for which prevalence survey is available, WHO tents to estimate higher number of deaths attributable to TB, although this difference is not statistically significant (p=0.2).
+
+
+
+# 1. Can you tell me the number of countries with WHO estimates without IHME estimates? (and the total number of deaths in those countries (the total, not country by country)?) I think these are 22 countries, but not 100% sure!
+
+
+#   
+#   2. The paragraph of the associations with different factors, you did not include the 95% CI, which i think would look good. Any reason?
+# 
+# 3. Lastly, i wanted to mention something about children. Could you tell me top 10 countries with higher differences (and the actual values) in children towards WHO and IHME? I am interested in knowing if there are the same as for all ages. I think a paragraph in the results section would be very interesting (since the initial table points at a high difference in children) Any other idea on what to put in this paragraph is welcome :)
+
+x <- df %>%
+  dplyr::select(country,
+                w_both_014_htb_nd,
+                w_both_014_tb_nd,
+                i_both_014_htb_nd,
+                i_both_014_tb_nd,
+                newrel_f014,
+                newrel_m014) %>%
+  mutate(difference = (w_both_014_htb_nd +  w_both_014_tb_nd) -  (i_both_014_htb_nd  + i_both_014_tb_nd)) %>%
+  mutate(absolute_difference = abs(difference)) %>%
+  arrange(desc(absolute_difference)) %>%
+  # In order to further appraise the children issue, i had an idea. Could we standardize (divide) the difference (a) by the reported indicent cases (newrel_f014 + newrel_f014) (from the notifications dataset of WHO) and see that are the rankings?
+  mutate(y = absolute_difference / (newrel_f014 + newrel_m014))
+
+
+x %>%
+  mutate(x = difference) %>%
+  arrange(x) %>%
+  mutate(x = round(x, 1)) %>%
+  dplyr::select(country, x) %>%
+  head(10)
+
+x %>%
+  mutate(x = difference) %>%
+  arrange(desc(x)) %>%
+  mutate(x = round(x, 1)) %>%
+  dplyr::select(country, x) %>%
+  head(10)
+
+
+x %>%
+  mutate(x = y) %>%
+  filter(!is.na(x),
+         !is.infinite(y)) %>%
+  arrange(x) %>%
+  # mutate(x = round(x, 1)) %>%
+  dplyr::select(country, x) %>%
+  head(10)
+
+x %>%
+  mutate(x = y) %>%
+  filter(!is.na(x),
+         !is.infinite(y)) %>%
+  arrange(desc(x)) %>%
+  # mutate(x = round(x, 1)) %>%
+  dplyr::select(country, x) %>%
+  head(10)
+
+
+
+write_csv(x, '~/Desktop/children_updated.csv')
+
+
+
+# How many deaths in those 23 countries with who and not ihme
+sum(df$w_both_all_tbtotal_nd[df$have_who & !df$have_ihme], na.rm = T)
+
+
+cor(df$adjusted_stand_dif, df$newrel_hivpos/df$newrel_hivtest,
+    use = 'complete.obs')
+
+# b) CDR by IHME
+# adjusted_stand_diff and cdr_ihme
+cor(df$adjusted_stand_dif, df$cdr_ihme,
+    use = 'complete.obs')
+cor(df$stand_dif, df$cdr_ihme,
+    use = 'complete.obs')
+
+# c) CDR by WHO
+# adjusted_stand_diff and gb_c_cdr
+cor(df$adjusted_stand_dif, as.numeric(df$gb_c_cdr),
+    use = 'complete.obs')
+cor(df$stand_dif, as.numeric(df$gb_c_cdr),
+    use = 'complete.obs')
+
+# d) Reported case fatality rate
+# adjusted_stand_diff and case_fatality_rate_2015_adjusted
+cor(df$adjusted_stand_dif,df$case_fatality_rate_2015_adjusted,
+    use = 'complete.obs')
+cor(df$stand_dif,df$case_fatality_rate_2015_adjusted,
+    use = 'complete.obs')
+# e) Reported MDR
+# adjusted_stand_diff and reported_mdr
+cor(df$adjusted_stand_dif,df$reported_mdr,
+    use = 'complete.obs')
+cor(df$stand_dif,df$reported_mdr,
+    use = 'complete.obs')
+
+library(psychometric)
+
+# Correlation coefficients
+confy <- function(x){
+  # fit <- lm(df$adjusted_stand_dif ~ x)
+  r <- cor(df$adjusted_stand_dif, x,
+           use = 'complete.obs')
+  CIr(r=r, n = nrow(df), level = .95)
+}
+
+confy(df$newrel_hivpos/df$newrel_hivtest)
+confy(df$cdr_ihme)
+confy(df$gb_c_cdr)
+confy(df$case_fatality_rate_2015_adjusted)

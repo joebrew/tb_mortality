@@ -15,5 +15,7 @@ notifications <- notifications %>%
                 newrel_hivpos,
                 newrel_hivtest,
                 ret_nrel,
-                conf_rrmdr) %>%
+                conf_rrmdr,
+                newrel_f014,
+                newrel_m014) %>%
   rename(mdr_rr = conf_rrmdr)

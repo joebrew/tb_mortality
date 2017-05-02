@@ -13,6 +13,7 @@ gb <- gb %>%
                 -iso_numeric,
                 -g_whoregion)
 
+
 # Remove all hi/lo vars
 gb <- gb[,!grepl('hi|lo', names(gb))]
 
@@ -24,3 +25,6 @@ names(gb) <-
   if_else(names(gb) == 'iso3',
           names(gb),
           paste0('gb_', names(gb)))
+
+# Make gb_c_cdr numeric
+gb$gb_c_cdr <- as.numeric(as.character(gb$gb_c_cdr))

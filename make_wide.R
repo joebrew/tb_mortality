@@ -427,7 +427,11 @@ df$prevsurvey[df$country %in%
                   'Philippines',
                   'Viet Nam')] <- 0
 
-# Make an overall ihme incidence using hiv and hiv tb
+# Create an IHME cdr variable
+df$cdr_ihme <- 
+  (df$c_newinc + df$ret_nrel) / 
+  df$ihme_incidence_both_allages_totaltb_number   * 100
+
 
 # Write csv
 write_csv(df, 'data/combined_data.csv')

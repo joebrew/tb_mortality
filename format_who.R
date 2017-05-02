@@ -38,6 +38,9 @@ names(who) <-
          paste0(names(who), '_rate'),
          names(who))
 
+# Make numeric
+
+
 # # Get the country linkage name
 # linkage <- read_csv('data/ISO_Country_Link.csv')
 # who <- left_join(who,
