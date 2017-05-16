@@ -323,8 +323,17 @@ df <- df %>%
          stand_dif= (w_both_all_tbtotal_nd-i_both_all_tbtotal_nd) / estimated_fatalities_2015)
 
 # REPLACE WITH MARTIEN'S
-df$stand_dif <- (df$w_both_all_tbtotal_nd - 
-                   df$i_both_all_tbtotal_nd) / 2
+df$stand_dif <- NA
+for (i in 1:nrow(df)){
+  df$stand_dif[i] <-
+    # Difference of estimates
+    (df$w_both_all_tbtotal_nd[i] - 
+       df$i_both_all_tbtotal_nd[i]) / 
+    # Divided by mean estimate
+    mean(c(df$w_both_all_tbtotal_nd[i], 
+           df$i_both_all_tbtotal_nd[i]))
+}
+
 
 # Fix the infs
 df$stand_dif[is.infinite(df$stand_dif)] <- NA
