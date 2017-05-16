@@ -84,6 +84,9 @@ world <- readOGR('shp/world', 'ne_110m_admin_0_countries')
 ```
 
 
+```{r}
+
+```
 
 # Tables
 

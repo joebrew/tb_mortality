@@ -214,3 +214,64 @@ confy(df$newrel_hivpos/df$newrel_hivtest)
 confy(df$cdr_ihme)
 confy(df$gb_c_cdr)
 confy(df$case_fatality_rate_2015_adjusted)
+
+# a) was the WHO estimated CDR significantly lower for countries that had prevalence surveys than for countries that did not? If so, it suggests that the two are interrelated, although this may in part reflect reverse causality (i.e prevalence surveys were done BECAUSE the countries concerned were expected to have low CDRs).
+fit <- lm(gb_c_cdr ~ prevsurvey, data = df)
+confint(fit)
+
+
+
+# b)  Could be to do a box and whisker plot of CDR estimates for WHO and IHME (e.g. different colours) for countries with prevalence surveys vs countries without?
+x <- df %>%
+  dplyr::select(country, prevsurvey,
+                gb_c_cdr,
+                cdr_ihme) %>%
+  rename(IHME = cdr_ihme,
+         WHO = gb_c_cdr,
+         `Prevalence survey` = prevsurvey) %>%
+  mutate(`Prevalence survey` = ifelse(`Prevalence survey` == 1, 'Survey',
+                                      'No survey')) %>%
+  gather(Source,
+         value,
+         WHO:IHME)
+library(ggplot2)
+ggplot(data = x,
+       aes(x = Source,
+           y = value,
+           fill = Source,
+           group = Source)) +
+  geom_boxplot(alpha = 0.5) +
+  facet_wrap(~`Prevalence survey`) +
+  scale_y_log10()
+
+# c) to what extent the association of CDR are stand diff changes if we remove those countries with prevalence survey)? Both in the case of WHO CDR and IHME CDR.
+x <- df %>%
+  dplyr::select(country, prevsurvey,
+                gb_c_cdr,
+                cdr_ihme,
+                stand_dif) %>%
+  rename(IHME = cdr_ihme,
+         WHO = gb_c_cdr,
+         `Prevalence survey` = prevsurvey,
+         `Standardized difference` = stand_dif) %>%
+  mutate(`Prevalence survey` = ifelse(`Prevalence survey` == 1, 'Survey',
+                                      'No survey'))
+
+ggplot(data = x,
+       aes(x = WHO,
+           y = `Standardized difference`)) +
+  geom_point(alpha = 0.6) +
+  facet_wrap(~`Prevalence survey`) +
+  geom_smooth() +
+  labs(title = 'WHO CDR and standardized difference')
+
+ggplot(data = x,
+       aes(x = IHME,
+           y = `Standardized difference`)) +
+  geom_point(alpha = 0.6) +
+  facet_wrap(~`Prevalence survey`) +
+  geom_smooth() +
+  labs(title = 'IHME CDR and standardized difference')
+
+
+# d) In the paper of TB by IHME, they report 1,324,342 deaths (195 countries). Our results for IHME are 1,322,916, a difference of 1426 deaths. I thought we included all IHME countries... Is there any WHO country not included in IHME countries?

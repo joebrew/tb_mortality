@@ -322,6 +322,10 @@ df <- df %>%
          stand_i = i_both_all_tbtotal_nd / estimated_fatalities_2015,
          stand_dif= (w_both_all_tbtotal_nd-i_both_all_tbtotal_nd) / estimated_fatalities_2015)
 
+# REPLACE WITH MARTIEN'S
+df$stand_dif <- (df$w_both_all_tbtotal_nd - 
+                   df$i_both_all_tbtotal_nd) / 2
+
 # Fix the infs
 df$stand_dif[is.infinite(df$stand_dif)] <- NA
 
