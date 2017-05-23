@@ -96,6 +96,8 @@ table(x$w_both_all_tbtotal_nd > x$i_both_all_tbtotal_nd)
 
 # When looking at the association between the adjusted standardized difference between IHME and WHO mortality estimates and different potential drivers of this difference we see poor correlation with reported HIV prevalence among TB cases (r= 0.03, 95%CI) , 
 
+cor(df$adjusted_stand_dif, df$p_hiv_of_tb, na.rm = TRUE)
+
 #MDR/RR prevalence (r= -0.05, 95%CI)  
 
 #and case fatality rate (r= -0.19, 95%CI). 
@@ -207,13 +209,21 @@ confy <- function(x){
   # fit <- lm(df$adjusted_stand_dif ~ x)
   r <- cor(df$adjusted_stand_dif, x,
            use = 'complete.obs')
-  CIr(r=r, n = nrow(df), level = .95)
+  message(paste0('Correlation coefficient: ', r))
+  print(CIr(r=r, n = nrow(df), level = .95))
 }
 
+confy(df$p_hiv_of_tb)
+confy(df$p_mdr_new)
 confy(df$newrel_hivpos/df$newrel_hivtest)
 confy(df$cdr_ihme)
 confy(df$gb_c_cdr)
 confy(df$case_fatality_rate_2015_adjusted)
+
+by(df$prevsurvey, mean(df$adjusted_stand_dif))
+x = df %>%
+  group_by(prevsurvey) %>%
+  summarise(m = mean(adjusted_stand_dif, na.rm = TRUE))
 
 # a) was the WHO estimated CDR significantly lower for countries that had prevalence surveys than for countries that did not? If so, it suggests that the two are interrelated, although this may in part reflect reverse causality (i.e prevalence surveys were done BECAUSE the countries concerned were expected to have low CDRs).
 fit <- lm(gb_c_cdr ~ prevsurvey, data = df)

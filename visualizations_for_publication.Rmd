@@ -748,7 +748,7 @@ ggplot(data = df,
   labs(x = 'Adjusted standardized difference',
        y = 'HIV prevalence among new TB cases',
        title = 'Association of standardized difference with HIV') +
-  xlim(-10,40) +
+  # xlim(-10,40) +
      geom_smooth(method='lm', se = FALSE, alpha = 0.2,
                formula = y ~ x) 
 ```
@@ -766,7 +766,7 @@ ggplot(data = df,
     labs(x = 'Adjusted standardized difference',
        y = 'MDR prevalence among new cases',
        title = 'Association of standardized difference with MDR prevalence') +
-    xlim(-10,40) +
+    # xlim(-10,40) +
      geom_smooth(method='lm', se = FALSE, alpha = 0.2,
                formula = y ~ x) 
 
@@ -785,7 +785,7 @@ ggplot(data = df,
     labs(x = 'Adjusted standardized difference',
        y = 'MDR prevalence among new cases',
        title = 'Association of standardized difference with MDR prevalence (reported)') +
-    xlim(-10,40) +
+    # xlim(-10,40) +
      geom_smooth(method='lm', se = FALSE, alpha = 0.2,
                formula = y ~ x) 
 
@@ -803,8 +803,8 @@ ggplot(data = df,
                formula = y ~ x) +
       labs(x = 'Adjusted standardized difference',
        y = 'Case detection rate',
-       title = 'Association of standardized difference with case detection rate') +
-    xlim(-10,40)
+       title = 'Association of standardized difference with case detection rate') #+
+    # xlim(-10,40)
 
 
 # Those countries with low case detection (oftentimes have prev survey),
@@ -831,7 +831,7 @@ ggplot(data = df,
       labs(x = 'Adjusted standardized difference',
        y = 'Case detection rate',
        title = 'Association of standardized difference with case detection rate') +
-    xlim(-10,40) +
+    # xlim(-10,40) +
   ylim(0, 100)
 
 
@@ -870,7 +870,7 @@ ggplot(data = df,
   labs(x = 'Adjusted standardized difference',
        y = 'Case fatality rate',
        title = 'Association of standardized difference with case fatality rate') +
-  xlim(-10, 40) +
+  # xlim(-10, 40) +
      geom_smooth(method='lm', se = FALSE, alpha = 0.2,
                formula = y ~ x) 
 
@@ -884,7 +884,7 @@ ggplot(data = df,
        aes(x = who_region,
            y = adjusted_stand_dif)) +
   geom_boxplot() +
-  ylim(-10, 20) +
+  # ylim(-10, 20) +
   geom_jitter(alpha = 0.3, size = 0.5) +
   theme_bw() +
   labs(x = 'Region',
@@ -898,7 +898,7 @@ ggplot(data = df,
        aes(x = who_region,
            y = adjusted_stand_dif)) +
   # geom_boxplot() +
-  ylim(-10, 20) +
+  # ylim(-10, 20) +
   theme_bw() +
   labs(x = 'Region',
        y = 'Adjusted standardized difference',
@@ -914,7 +914,7 @@ ggplot(data = df,
        aes(x = factor(prevsurvey),
            y = adjusted_stand_dif)) +
   geom_boxplot() +
-  ylim(-10, 20) +
+  # ylim(-10, 20) +
   geom_jitter(alpha = 0.3) +
   theme_bw() +
   labs(x = 'Prevalence survey',
@@ -947,7 +947,7 @@ ggplot(data = df,
   labs(x = 'Adj. stand. dif. in inc.',
        y = 'HIV prevalence among new TB cases',
        title = 'Association of Adj. stand. dif. in inc. with HIV') +
-  xlim(-10,40) +
+  # xlim(-10,40) +
      geom_smooth(method='lm', se = FALSE, alpha = 0.2,
                formula = y ~ x) 
 ```
@@ -965,7 +965,7 @@ ggplot(data = df,
     labs(x = 'Adj. stand. dif. in inc.',
        y = 'MDR prevalence among new cases',
        title = 'Association of Adj. stand. dif. in inc. with MDR prevalence') +
-    xlim(-10,40) +
+    # xlim(-10,40) +
      geom_smooth(method='lm', se = FALSE, alpha = 0.2,
                formula = y ~ x) 
 
@@ -984,7 +984,7 @@ ggplot(data = df,
     labs(x = 'Adj. stand. dif. in inc.',
        y = 'MDR prevalence among new cases',
        title = 'Association of Adj. stand. dif. in inc. with MDR prevalence (reported)') +
-    xlim(-10,40) +
+    # xlim(-10,40) +
      geom_smooth(method='lm', se = FALSE, alpha = 0.2,
                formula = y ~ x) 
 
@@ -1003,7 +1003,7 @@ ggplot(data = df,
       labs(x = 'Adj. stand. dif. in inc.',
        y = 'Case detection rate',
        title = 'Association of Adj. stand. dif. in inc.') +
-    xlim(-10,40)
+    # xlim(-10,40)
 
 
 # Those countries with low case detection (oftentimes have prev survey),
@@ -1029,9 +1029,9 @@ ggplot(data = df,
                formula = y ~ x) +
       labs(x = 'Adj. stand. dif. in inc.',
        y = 'Case detection rate',
-       title = 'Association of Adj. stand. dif. in inc. with case detection rate') +
-    xlim(-10,40) +
-  ylim(0, 100)
+       title = 'Association of Adj. stand. dif. in inc. with case detection rate') #+
+    # xlim(-10,40) +
+  # ylim(0, 100)
 
 
 # Those countries with low case detection (oftentimes have prev survey),
@@ -1049,7 +1049,7 @@ ggplot(data = df,
   labs(x = 'Adj. stand. dif. in inc.',
        y = 'Case fatality rate',
        title = 'Association of Adj. stand. dif. in inc. with case fatality rate') +
-  xlim(-10, 40) +
+  # xlim(-10, 40) +
      geom_smooth(method='lm', se = FALSE, alpha = 0.2,
                formula = y ~ x) 
 
@@ -1063,7 +1063,7 @@ ggplot(data = df,
        aes(x = who_region,
            y = stand_dif_inc_adj)) +
   geom_boxplot() +
-  ylim(-10, 20) +
+  # ylim(-10, 20) +
   geom_jitter(alpha = 0.3, size = 0.5) +
   theme_bw() +
   labs(x = 'Region',
@@ -1077,7 +1077,7 @@ ggplot(data = df,
        aes(x = who_region,
            y = stand_dif_inc_adj)) +
   # geom_boxplot() +
-  ylim(-10, 20) +
+  # ylim(-10, 20) +
   theme_bw() +
   labs(x = 'Region',
        y = 'Adj. stand. dif. in inc.',
@@ -1093,7 +1093,7 @@ ggplot(data = df,
        aes(x = factor(prevsurvey),
            y = stand_dif_inc_adj)) +
   geom_boxplot() +
-  ylim(-10, 20) +
+  # ylim(-10, 20) +
   geom_jitter(alpha = 0.3) +
   theme_bw() +
   labs(x = 'Prevalence survey',
@@ -1125,7 +1125,7 @@ ggplot(data = df,
   labs(x = 'Adjusted AB',
        y = 'HIV prevalence among new TB cases',
        title = 'Association of AB with HIV') +
-  xlim(-10,40) +
+  # xlim(-10,40) +
      geom_smooth(method='lm', se = FALSE, alpha = 0.2,
                formula = y ~ x) 
 ```
@@ -1143,7 +1143,7 @@ ggplot(data = df,
     labs(x = 'Adjusted AB',
        y = 'MDR prevalence among new cases',
        title = 'Association of AB with MDR prevalence') +
-    xlim(-10,40) +
+    # xlim(-10,40) +
      geom_smooth(method='lm', se = FALSE, alpha = 0.2,
                formula = y ~ x) 
 
@@ -1162,7 +1162,7 @@ ggplot(data = df,
     labs(x = 'Adjusted AB',
        y = 'MDR prevalence among new cases',
        title = 'Association of adjusted AB with MDR prevalence (reported)') +
-    xlim(-10,40) +
+    # xlim(-10,40) +
      geom_smooth(method='lm', se = FALSE, alpha = 0.2,
                formula = y ~ x) 
 
@@ -1180,8 +1180,8 @@ ggplot(data = df,
                formula = y ~ x) +
       labs(x = 'Adjusted AB',
        y = 'Case detection rate',
-       title = 'Association of AB with case detection rate') +
-    xlim(-10,40)
+       title = 'Association of AB with case detection rate') #+
+    # xlim(-10,40)
 
 ```
 
@@ -1204,9 +1204,9 @@ ggplot(data = df,
                formula = y ~ x) +
       labs(x = 'Adjusted AB difference',
        y = 'Case detection rate',
-       title = 'Association of adjusted AB with case detection rate') +
-    xlim(-10,40) +
-  ylim(0, 100)
+       title = 'Association of adjusted AB with case detection rate') #+
+    # xlim(-10,40) +
+  # ylim(0, 100)
 
 ```
 
@@ -1221,7 +1221,7 @@ ggplot(data = df,
   labs(x = 'Adjusted AB',
        y = 'Case fatality rate',
        title = 'Association of adjusted AB with case fatality rate') +
-  xlim(-10, 40) +
+  # xlim(-10, 40) +
      geom_smooth(method='lm', se = FALSE, alpha = 0.2,
                formula = y ~ x) 
 
@@ -1235,7 +1235,7 @@ ggplot(data = df,
        aes(x = who_region,
            y = adjusted_ab)) +
   geom_boxplot() +
-  ylim(-10, 20) +
+  # ylim(-10, 20) +
   geom_jitter(alpha = 0.3, size = 0.5) +
   theme_bw() +
   labs(x = 'Region',
@@ -1249,7 +1249,7 @@ ggplot(data = df,
        aes(x = who_region,
            y = adjusted_ab)) +
   # geom_boxplot() +
-  ylim(-10, 20) +
+  # ylim(-10, 20) +
   theme_bw() +
   labs(x = 'Region',
        y = 'Adjusted AB',
@@ -1265,7 +1265,7 @@ ggplot(data = df,
        aes(x = factor(prevsurvey),
            y = adjusted_ab)) +
   geom_boxplot() +
-  ylim(-10, 20) +
+  # ylim(-10, 20) +
   geom_jitter(alpha = 0.3) +
   theme_bw() +
   labs(x = 'Prevalence survey',

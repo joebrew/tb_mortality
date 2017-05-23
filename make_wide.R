@@ -355,7 +355,9 @@ df <- df %>%
   mutate(log_stand_dif = log(stand_dif))
 
 # Make stand_dif as percentage of max
-df$adjusted_stand_dif <- df$stand_dif / max(df$stand_dif, na.rm = TRUE) * 100
+df$adjusted_stand_dif <- df$stand_dif / 
+  max(abs(c(min(df$stand_dif, na.rm = TRUE), max(df$stand_dif, na.rm = TRUE)))) * 
+  100
 
 # Make an adjusted log stand dif with negatives
 df$stand_dif_sqrt_directional <- sqrt(abs(df$stand_dif))
