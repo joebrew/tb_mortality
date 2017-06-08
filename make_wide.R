@@ -224,6 +224,7 @@ df$i_both_all_tbtotal_nd <- df$i_both_all_htb_nd + df$i_both_all_tb_nd
 # Format variables from Global burden public
 # and join to df
 source('format_global_burden.R')
+df <- df[,!duplicated(names(df))]
 df <-
   df %>%
   left_join(gb,
@@ -323,6 +324,7 @@ df <- df %>%
          stand_dif= (w_both_all_tbtotal_nd-i_both_all_tbtotal_nd) / estimated_fatalities_2015)
 
 # REPLACE WITH MARTIEN'S
+df$original_stand_dif <- df$stand_dif
 df$stand_dif <- NA
 for (i in 1:nrow(df)){
   df$stand_dif[i] <-

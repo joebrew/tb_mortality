@@ -405,6 +405,27 @@ ggplot(data = temp,
 
 ```{r}
 temp <- df
+temp <- temp %>% filter(!is.na(original_stand_dif)) %>% arrange(original_stand_dif)
+temp <- temp[c(1:10,
+               (nrow(temp) - 9):nrow(temp)),]
+temp$country <- factor(temp$country,
+                       levels = temp$country)
+ggplot(data = temp,
+       aes(x = country,
+           y = original_stand_dif)) +
+  geom_bar(stat = 'identity',
+           fill = 'darkorange',
+           alpha = 0.6) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab('Standardized difference') +
+  xlab('Country') +
+  labs(title = 'Standardized difference: top and bottom 10',
+       subtitle = 'Figure 1b') 
+```
+
+```{r}
+temp <- df
 temp <- temp %>% filter(!is.na(stand_dif_sqrt_directional)) %>% arrange(stand_dif_sqrt_directional)
 temp <- temp[c(1:10,
                (nrow(temp) - 9):nrow(temp)),]
