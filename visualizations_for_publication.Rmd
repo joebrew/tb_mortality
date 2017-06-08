@@ -405,7 +405,8 @@ ggplot(data = temp,
 
 ```{r}
 temp <- df
-temp <- temp %>% filter(!is.na(original_stand_dif)) %>% arrange(original_stand_dif)
+temp <- temp %>% filter(!is.na(original_stand_dif),
+                        is.finite(original_stand_dif)) %>% arrange(original_stand_dif)
 temp <- temp[c(1:10,
                (nrow(temp) - 9):nrow(temp)),]
 temp$country <- factor(temp$country,

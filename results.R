@@ -207,7 +207,7 @@ library(psychometric)
 # Correlation coefficients
 confy <- function(x){
   # fit <- lm(df$adjusted_stand_dif ~ x)
-  r <- cor(df$adjusted_stand_dif, x,
+  r <- cor(df$stand_dif, x,
            use = 'complete.obs')
   message(paste0('Correlation coefficient: ', r))
   print(CIr(r=r, n = nrow(df), level = .95))
