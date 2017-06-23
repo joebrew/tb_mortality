@@ -1364,7 +1364,7 @@ popup <- paste0("<strong>Country: </strong>",
                 round(world@data$adjusted_stand_dif, digits = 3)
                 )
 
-leaflet(data = world) %>%
+l <- leaflet(data = world) %>%
   addProviderTiles("Stamen.TonerBackground") %>% 
   setView(lng = mean(coordinates(world)[,1]),
           lat = mean(coordinates(world)[,2]),
@@ -1378,6 +1378,9 @@ leaflet(data = world) %>%
             values = ~indicator, opacity = 0.9,
             position = 'bottomright',
             title = paste0('Adjusted standardized difference', "<br>"))
+l
+# library(htmlwidgets)
+# saveWidget(l, file='../joebrew.github.io/map.html')
 ```
 
 ## Map of world
