@@ -609,7 +609,57 @@ g1 <-
        title = 'Absolute difference by country') +
   theme_bw()
 g1
+```
 
+```{r}
+g1 <- 
+  ggplot(data = world_tidy,
+       aes(x = long,
+           y = lat,
+           group = group,
+           fill = absolute_difference)) +
+  coord_map() +
+  geom_polygon(color = 'black',  size = 0.1) +
+  # theme_cism() +
+  scale_fill_gradient2(low = 'darkgreen',
+                       mid = 'white',
+                         high = 'darkorange',
+                       na.value = 'white',
+                       trans = 'log',
+                       name = '') +
+  labs(x = 'Longitude',
+       y = 'Latitude',
+       title = 'Absolute difference by country',
+       subtitle = 'Log scale') +
+  theme_bw()
+g1
+```
+
+```{r}
+g1 <- 
+  ggplot(data = world_tidy,
+       aes(x = long,
+           y = lat,
+           group = group,
+           fill = absolute_difference)) +
+  coord_map() +
+  geom_polygon(color = 'black',  size = 0.1) +
+  # theme_cism() +
+  scale_fill_gradient2(low = 'darkgreen',
+                       mid = 'white',
+                         high = 'darkorange',
+                       na.value = 'white',
+                       trans = 'sqrt',
+                       name = '') +
+  labs(x = 'Longitude',
+       y = 'Latitude',
+       title = 'Absolute difference by country',
+       subtitle = 'Square root scale') +
+  theme_bw()
+g1
+```
+
+```{r}
 
 # Clean up
 # Make NA countries look cleaner with a shaded
@@ -1451,3 +1501,62 @@ Does having a prev survey affect the adjusted stand diff?
 t.test(x = df$adjusted_stand_dif[df$prevsurvey == 0],
        y = df$adjusted_stand_dif[df$prevsurvey == 1])
 ```
+
+
+## Supplemental charts
+
+April 18, 2018
+
+
+```{r}
+temp <- df
+temp <- temp %>% filter(!is.na(original_stand_dif_child),
+                        is.finite(original_stand_dif_child)) %>% arrange(original_stand_dif_child)
+temp <- temp[c(1:10,
+               (nrow(temp) - 9):nrow(temp)),]
+temp$country <- factor(temp$country,
+                       levels = temp$country)
+ggplot(data = temp,
+       aes(x = country,
+           y = original_stand_dif_child)) +
+  geom_bar(stat = 'identity',
+           fill = 'darkorange',
+           alpha = 0.6) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab('Standardized difference') +
+  xlab('Country') +
+  labs(title = 'Standardized difference: top and bottom 10',
+       subtitle = '0-14 YEARS OLD ONLY') 
+```
+
+Concordance between adult and child measures
+
+```{r}
+ggplot(data = df,
+       aes(x = original_stand_dif,
+           y = original_stand_dif_child)) +
+  geom_point(color = 'darkorange',
+             alpha = 0.6,
+             aes(size = gb_e_pop_num / 1000000)) +
+  theme_bw() +
+  ylab('Child-specific standardized difference') +
+  xlab('All ages standardized difference') +
+  labs(title = 'Correlation between child and all ages standardized difference') +
+  scale_size_continuous(name = 'Population\n(millions)',
+                        breaks = c(1, 10, 100, 1000))
+```
+
+## Effect of prevalence survey
+
+Is CDR associated with stand diff in the linear regression among those countries without prevalence survey?
+
+```{r, echo = TRUE}
+x <- df
+x$gb_c_cdr[!is.finite(x$gb_c_cdr)] <- NA
+x$original_stand_dif[!is.finite(x$original_stand_dif)] <- NA
+fit <- lm(gb_c_cdr ~ original_stand_dif, data = x[x$prevsurvey == 0,])
+summary(fit)
+```
+
+Yes. Among countries without a prevalence survey, a 1 unit increase in the standardized difference is associated with a 0.355 unit decrease in the CDR. This is significant (p < 0.01).

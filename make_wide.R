@@ -216,10 +216,11 @@ df$highmdr[df$country_number %in% has_high_mdr] <- 1
 # # Create variable ALL TB DEATHS WHO
 # egen wndalltb = rowtotal (wndtb_all wndhtb_all)
 df$w_both_all_tbtotal_nd <- df$w_both_all_htb_nd + df$w_both_all_tb_nd
-
+df$w_both_014_tbtotal_nd <- df$w_both_014_htb_nd + df$w_both_014_tb_nd
 # *Create variable ALL TB DEATHS by IHME (i need to destring first).
 # egen indalltb = rowtotal (indtb_all indhtb_all)
 df$i_both_all_tbtotal_nd <- df$i_both_all_htb_nd + df$i_both_all_tb_nd
+df$i_both_014_tbtotal_nd <- df$i_both_014_htb_nd + df$i_both_014_tb_nd
 
 # Format variables from Global burden public
 # and join to df
@@ -321,12 +322,19 @@ df$w_cases_over_deaths <-
 df <- df %>%
   mutate(stand_w = w_both_all_tbtotal_nd / estimated_fatalities_2015,
          stand_i = i_both_all_tbtotal_nd / estimated_fatalities_2015,
-         stand_dif= (w_both_all_tbtotal_nd-i_both_all_tbtotal_nd) / estimated_fatalities_2015)
+         stand_dif= (w_both_all_tbtotal_nd-i_both_all_tbtotal_nd) / estimated_fatalities_2015) %>%
+  mutate(stand_child_w = w_both_014_tbtotal_nd / estimated_fatalities_2015,
+         stand_child_i = i_both_014_tbtotal_nd / estimated_fatalities_2015,
+         stand_dif_child= (w_both_014_tbtotal_nd-i_both_014_tbtotal_nd) / estimated_fatalities_2015)
 
 # REPLACE WITH MARTIEN'S
 df$original_stand_dif <- df$stand_dif
+df$original_stand_dif_child <- df$stand_dif_child
 df$stand_dif <- NA
+df$stand_dif_child <- NA
 for (i in 1:nrow(df)){
+  
+  # ALL
   df$stand_dif[i] <-
     # Difference of estimates
     (df$w_both_all_tbtotal_nd[i] - 
@@ -334,14 +342,29 @@ for (i in 1:nrow(df)){
     # Divided by mean estimate
     mean(c(df$w_both_all_tbtotal_nd[i], 
            df$i_both_all_tbtotal_nd[i]))
+  
+  # CHILDREN
+  df$stand_dif_child[i] <-
+    # Difference of estimates
+    (df$w_both_014_tbtotal_nd[i] -
+       df$i_both_014_tbtotal_nd[i]) /
+    # Divided by mean estimate
+    mean(c(df$w_both_014_tbtotal_nd[i],
+           df$i_both_014_tbtotal_nd[i]))
 }
 
 
 # Fix the infs
 df$stand_dif[is.infinite(df$stand_dif)] <- NA
+df$stand_dif_child[is.infinite(df$stand_dif_child)] <- NA
 
 
 # Get ranking of standdif
+df <- df %>%
+  mutate(dummy = 1) %>%
+  arrange(desc(stand_dif_child)) %>%
+  mutate(rank_stand_dif_child = cumsum(dummy)) %>%
+  dplyr::select(-dummy)
 df <- df %>%
   mutate(dummy = 1) %>%
   arrange(desc(stand_dif)) %>%
@@ -350,15 +373,20 @@ df <- df %>%
 
 # Make percentile of stand dif
 df <- df %>%
-  mutate(percentile_stand_dif = percent_rank(stand_dif) * 100)
+  mutate(percentile_stand_dif = percent_rank(stand_dif) * 100) %>%
+  mutate(percentile_stand_dif_child = percent_rank(stand_dif_child) * 100) 
 
 # Make log of stand dif
 df <- df %>%
-  mutate(log_stand_dif = log(stand_dif))
+  mutate(log_stand_dif = log(stand_dif)) %>%
+  mutate(log_stand_dif_child = log(stand_dif_child))
 
 # Make stand_dif as percentage of max
 df$adjusted_stand_dif <- df$stand_dif / 
   max(abs(c(min(df$stand_dif, na.rm = TRUE), max(df$stand_dif, na.rm = TRUE)))) * 
+  100
+df$adjusted_stand_dif_child <- df$stand_dif_child / 
+  max(abs(c(min(df$stand_dif_child, na.rm = TRUE), max(df$stand_dif_child, na.rm = TRUE)))) * 
   100
 
 # Make an adjusted log stand dif with negatives
@@ -366,6 +394,10 @@ df$stand_dif_sqrt_directional <- sqrt(abs(df$stand_dif))
 df$stand_dif_sqrt_directional <- ifelse(df$stand_dif > 0,
                                     df$stand_dif_sqrt_directional,
                                     df$stand_dif_sqrt_directional * -1)
+df$stand_dif_child_sqrt_directional <- sqrt(abs(df$stand_dif_child))
+df$stand_dif_child_sqrt_directional <- ifelse(df$stand_dif_child > 0,
+                                        df$stand_dif_child_sqrt_directional,
+                                        df$stand_dif_child_sqrt_directional * -1)
 
 
 # Create age specific who variables
