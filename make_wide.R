@@ -323,15 +323,29 @@ df <- df %>%
   mutate(stand_w = w_both_all_tbtotal_nd / estimated_fatalities_2015,
          stand_i = i_both_all_tbtotal_nd / estimated_fatalities_2015,
          stand_dif= (w_both_all_tbtotal_nd-i_both_all_tbtotal_nd) / estimated_fatalities_2015) %>%
+  # Children
   mutate(stand_child_w = w_both_014_tbtotal_nd / estimated_fatalities_2015,
          stand_child_i = i_both_014_tbtotal_nd / estimated_fatalities_2015,
-         stand_dif_child= (w_both_014_tbtotal_nd-i_both_014_tbtotal_nd) / estimated_fatalities_2015)
+         stand_dif_child= (w_both_014_tbtotal_nd-i_both_014_tbtotal_nd) / estimated_fatalities_2015) %>%
+  # HIV children
+  mutate(stand_child_h_w = w_both_014_htb_nd / estimated_fatalities_2015,
+         stand_child_h_i = i_both_014_htb_nd / estimated_fatalities_2015,
+         stand_dif_child_h= (w_both_014_htb_nd-i_both_014_htb_nd) / estimated_fatalities_2015) %>%
+  # HIV all ages
+  mutate(stand_h_w = w_both_all_htb_nd / estimated_fatalities_2015,
+         stand_h_i = i_both_all_htb_nd / estimated_fatalities_2015,
+         stand_dif_h= (w_both_all_htb_nd-i_both_all_htb_nd) / estimated_fatalities_2015)
+  
 
 # REPLACE WITH MARTIEN'S
 df$original_stand_dif <- df$stand_dif
 df$original_stand_dif_child <- df$stand_dif_child
+df$original_stand_dif_child_h <- df$stand_dif_child_h
+df$original_stand_dif_h <- df$stand_dif_h
 df$stand_dif <- NA
 df$stand_dif_child <- NA
+df$stand_dif_child_h <- NA
+df$stand_dif_h <- NA
 for (i in 1:nrow(df)){
   
   # ALL
@@ -351,12 +365,33 @@ for (i in 1:nrow(df)){
     # Divided by mean estimate
     mean(c(df$w_both_014_tbtotal_nd[i],
            df$i_both_014_tbtotal_nd[i]))
+  
+  # HIV CHILDREN
+  df$stand_dif_child_h[i] <-
+    # Difference of estimates
+    (df$w_both_014_htb_nd[i] -
+       df$i_both_014_htb_nd[i]) /
+    # Divided by mean estimate
+    mean(c(df$w_both_014_htb_nd[i],
+           df$i_both_014_htb_nd[i]))
+  
+  # All ages hiv
+  # HIV CHILDREN
+  df$stand_dif_h[i] <-
+    # Difference of estimates
+    (df$w_both_all_htb_nd[i] -
+       df$i_both_all_htb_nd[i]) /
+    # Divided by mean estimate
+    mean(c(df$w_both_all_htb_nd[i],
+           df$i_both_all_htb_nd[i]))
 }
 
 
 # Fix the infs
 df$stand_dif[is.infinite(df$stand_dif)] <- NA
 df$stand_dif_child[is.infinite(df$stand_dif_child)] <- NA
+df$stand_dif_child_h[is.infinite(df$stand_dif_child_h)] <- NA
+df$stand_dif_h[is.infinite(df$stand_dif_h)] <- NA
 
 
 # Get ranking of standdif

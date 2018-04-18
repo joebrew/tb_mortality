@@ -1508,6 +1508,8 @@ t.test(x = df$adjusted_stand_dif[df$prevsurvey == 0],
 April 18, 2018
 
 
+Alberto Method: top and bottom 10 stand diff (children only)
+
 ```{r}
 temp <- df
 temp <- temp %>% filter(!is.na(original_stand_dif_child),
@@ -1527,10 +1529,34 @@ ggplot(data = temp,
   ylab('Standardized difference') +
   xlab('Country') +
   labs(title = 'Standardized difference: top and bottom 10',
-       subtitle = '0-14 YEARS OLD ONLY') 
+       subtitle = 'Alberto method: 0-14 YEARS OLD ONLY') 
 ```
 
-Concordance between adult and child measures
+Martien Method: top and bottom 10 stand diff (children only)
+
+```{r}
+temp <- df
+temp <- temp %>% filter(!is.na(stand_dif_child),
+                        is.finite(stand_dif_child)) %>% arrange(stand_dif_child)
+temp <- temp[c(1:10,
+               (nrow(temp) - 9):nrow(temp)),]
+temp$country <- factor(temp$country,
+                       levels = temp$country)
+ggplot(data = temp,
+       aes(x = country,
+           y = stand_dif_child)) +
+  geom_bar(stat = 'identity',
+           fill = 'darkorange',
+           alpha = 0.6) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab('Standardized difference') +
+  xlab('Country') +
+  labs(title = 'Standardized difference: top and bottom 10',
+       subtitle = 'Martien method: 0-14 YEARS OLD ONLY') 
+```
+
+Concordance between adult and child measures (Alberto method)
 
 ```{r}
 ggplot(data = df,
@@ -1547,6 +1573,76 @@ ggplot(data = df,
                         breaks = c(1, 10, 100, 1000))
 ```
 
+
+Concordance between adult and child measures (Martien method)
+
+```{r}
+ggplot(data = df,
+       aes(x = stand_dif,
+           y = stand_dif_child)) +
+  geom_point(color = 'darkorange',
+             alpha = 0.6,
+             aes(size = gb_e_pop_num / 1000000)) +
+  theme_bw() +
+  ylab('Child-specific standardized difference') +
+  xlab('All ages standardized difference') +
+  labs(title = 'Correlation between child and all ages standardized difference') +
+  scale_size_continuous(name = 'Population\n(millions)',
+                        breaks = c(1, 10, 100, 1000))
+```
+
+
+
+Alberto Method: top and bottom 10 stand diff (HIV only, all ages)
+
+```{r}
+temp <- df
+temp <- temp %>% filter(!is.na(original_stand_dif_h),
+                        is.finite(original_stand_dif_h)) %>% arrange(original_stand_dif_h)
+temp <- temp[c(1:10,
+               (nrow(temp) - 9):nrow(temp)),]
+temp$country <- factor(temp$country,
+                       levels = temp$country)
+ggplot(data = temp,
+       aes(x = country,
+           y = original_stand_dif_h)) +
+  geom_bar(stat = 'identity',
+           fill = 'darkorange',
+           alpha = 0.6) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab('Standardized difference') +
+  xlab('Country') +
+  labs(title = 'Standardized difference: top and bottom 10',
+       subtitle = 'Alberto method: HIV all ages') 
+```
+
+Martien Method: top and bottom 10 stand diff (HIV, all ages)
+
+```{r}
+temp <- df
+temp <- temp %>% filter(!is.na(stand_dif_h),
+                        is.finite(stand_dif_h)) %>% arrange(stand_dif_h)
+temp <- temp[c(1:10,
+               (nrow(temp) - 9):nrow(temp)),]
+temp$country <- factor(temp$country,
+                       levels = temp$country)
+ggplot(data = temp,
+       aes(x = country,
+           y = stand_dif_h)) +
+  geom_bar(stat = 'identity',
+           fill = 'darkorange',
+           alpha = 0.6) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab('Standardized difference') +
+  xlab('Country') +
+  labs(title = 'Standardized difference: top and bottom 10',
+       subtitle = 'Martien method: HIV, all ages') 
+```
+
+
+
 ## Effect of prevalence survey
 
 Is CDR associated with stand diff in the linear regression among those countries without prevalence survey?
@@ -1560,3 +1656,125 @@ summary(fit)
 ```
 
 Yes. Among countries without a prevalence survey, a 1 unit increase in the standardized difference is associated with a 0.355 unit decrease in the CDR. This is significant (p < 0.01).
+
+# More visualizations
+
+Afternoon of Wednesday, April 18. All charts are IHME minus WHO.
+
+```{r}
+# Define function for getting ab and std diff
+make_diff <- function(a, b, absolute = FALSE, standardize = TRUE){
+  if(absolute){
+    out <- a-b #abs(a-b)
+  } else {
+    out <- a-b/(a+b)/2
+    if(standardize){
+      out <- out / abs(max(c(max(out, na.rm = TRUE),
+                         min(out, na.rm = TRUE)))) * 100
+    }
+  }
+ return(out) 
+}
+plotter <- function(x){
+  x <- x %>% arrange(val)
+  x <- x[c(1:10, (nrow(x)-9):nrow(x)),]
+  x$country <- factor(x$country, levels = x$country)
+  ggplot(data = x,
+         aes(x = country,
+             y = val)) +
+    geom_bar(stat = 'identity',
+           fill = 'darkorange',
+           alpha = 0.6) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+    labs(x = 'Country',
+         y = 'Value')
+}
+```
+
+### 1. HIV+ all ages absolute differences
+
+```{r}
+x <- df
+x$val <- make_diff(a = df$i_both_all_htb_nd,
+          b = df$w_both_all_htb_nd,
+          absolute = TRUE)
+plotter(x)
+```
+
+### 2. HIV+ all ages standardized adjusted differences
+
+```{r}
+x <- df
+x$val <- make_diff(a = df$i_both_all_htb_nd,
+          b = df$w_both_all_htb_nd,
+          absolute = FALSE,
+          standardize = TRUE)
+plotter(x)
+```
+
+### 3. HIV- all ages absolute differences
+
+```{r}
+x <- df
+x$val <- make_diff(a = df$i_both_all_tb_nd - df$i_both_all_htb_nd,
+          b = df$w_both_all_tb_nd - df$w_both_all_htb_nd,
+          absolute = TRUE)
+plotter(x)
+```
+
+
+### 4. HIV- all ages standardized adjusted differences
+
+```{r}
+x <- df
+x$val <- make_diff(a = df$i_both_all_tb_nd - df$i_both_all_htb_nd,
+          b = df$w_both_all_tb_nd - df$w_both_all_htb_nd,
+          absolute = FALSE,
+          standardize = TRUE)
+plotter(x)
+```
+
+### 5. Children absolute difference
+
+```{r}
+x <- df
+x$val <- make_diff(a = df$i_both_014_tb_nd,
+          b = df$w_both_014_tb_nd,
+          absolute = TRUE)
+plotter(x)
+```
+
+### 6. Children standardized adjusted difference
+
+```{r}
+x <- df
+x$val <- make_diff(a = df$i_both_014_tb_nd,
+          b = df$w_both_014_tb_nd,
+          absolute = FALSE)
+plotter(x)
+```
+
+### 7. Adults standardized adjusted difference
+
+```{r}
+x <- df
+x$val <- make_diff(a = df$i_both_all_tb_nd - df$i_both_014_tb_nd,
+          b = df$w_both_all_tb_nd - df$w_both_014_tb_nd,
+          absolute = TRUE)
+plotter(x)
+```
+
+
+
+### 8. Adults standardized adjusted difference
+
+```{r}
+x <- df
+x$val <- make_diff(a = df$i_both_all_tb_nd - df$i_both_014_tb_nd,
+          b = df$w_both_all_tb_nd - df$w_both_014_tb_nd,
+          absolute = FALSE)
+plotter(x)
+```
+
+
