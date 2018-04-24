@@ -14,7 +14,9 @@ knitr::opts_chunk$set(comment = NA,
                warning = FALSE, 
                message = FALSE, 
                error = TRUE, 
-               cache = FALSE)
+               cache = FALSE,
+               dpi = 300,
+               fig.path = 'figures/')
 ```
 
 ```{r, results = 'hide'}
