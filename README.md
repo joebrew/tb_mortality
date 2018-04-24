@@ -38,7 +38,11 @@ This wasretrieved from the "Natural Earth" database, administrative level 0, cou
 
 ## Combining data
 
-To combine the different direct sources into one "wide" dataset, run `make_wide.R`. This generated `combined_data.csv`.
+To combine the different direct sources into one "wide" dataset, run `make_wide.R`. This generates `combined_data.csv` the main dataset used for the entire analysis.
+
+## Reproducing charts, tables, and statistics
+
+The `visualizations_for_publication.Rmd` file contains the code for different charts, tables, and statistical tests used for the article. It also includes many items _not_ used for the article (ie, exploratory analysis, "sanity checks", etc.).
 
 ## Questions
 

@@ -28,6 +28,7 @@ library(rgdal)
 library(tidyr)
 library(RColorBrewer)
 library(broom)
+library(kableExtra)
 
 # Read in data
 source('make_wide.R')
@@ -1659,21 +1660,45 @@ Yes. Among countries without a prevalence survey, a 1 unit increase in the stand
 
 # More visualizations
 
-Afternoon of Wednesday, April 18. All charts are IHME minus WHO.
+Afternoon of Wednesday, April 19. All charts are WHO minus IHME
 
 ```{r}
 # Define function for getting ab and std diff
-make_diff <- function(a, b, absolute = FALSE, standardize = TRUE){
+make_diff <- function(a, b, data, absolute = FALSE, standardize = TRUE){
+  remove <- 
+    # No NAs allowed
+    (is.na(a) |
+    is.na(b)) |
+    # # If a is 0, b has to be greater than 5
+    # (a == 0 & b <= 5) |
+    # # or, if b is 0, a has to be greater than 5
+    # (b == 0 & a <= 5)
+    (a <= 5 & b <= 5) 
+    
+  keep <- !remove
+    
+                
+  data <- data[keep,]
+  a <- a[keep]
+  b <- b[keep]
+  absolute_diff <- a-b
+  jj <- (a-b)/((a+b)/2)
+  standardized_diff <- (jj) / abs(max(abs(c(max(jj, na.rm = TRUE),
+                         min(jj, na.rm = TRUE))))) * 100
   if(absolute){
-    out <- a-b #abs(a-b)
+    out <- absolute_diff
   } else {
-    out <- a-b/(a+b)/2
+    out <- (a-b)/((a+b)/2)
     if(standardize){
-      out <- out / abs(max(c(max(out, na.rm = TRUE),
-                         min(out, na.rm = TRUE)))) * 100
+      
+      out <- standardized_diff
     }
   }
- return(out) 
+  data$val <- out
+  data$absolute_diff <- absolute_diff
+  data$standardized_diff <- standardized_diff
+  data$country <- ifelse(grepl('acedonia', data$country), 'Macedonia', data$country)
+ return(data) 
 }
 plotter <- function(x){
   x <- x %>% arrange(val)
@@ -1688,93 +1713,306 @@ plotter <- function(x){
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90)) +
     labs(x = 'Country',
-         y = 'Value')
+         y = '')
+}
+make_table <- function(x){
+  out <- x %>%
+    arrange(val)
+  out <- out[c(1:10, (nrow(x)-9):nrow(x)),]
+  out <- bind_rows(out[20:11,],
+                   out[1:10,])
+  row.names(out) <- NULL
+  out <- out %>% dplyr::select(country, val)
+  names(out) <- c('Country', 'Value')
+  knitr::kable(out, format = 'html') %>%
+    kable_styling() %>%
+    kableExtra::row_spec(row = 11:20, 
+                         color = '#0000A0',
+                         background = '#ff9393')
+}
+source('prettify.R')
+make_pretty <- function(x){
+  out <- x %>% dplyr::select(country, absolute_diff, standardized_diff)
+  prettify(out, download_options = TRUE)
+}
+
+make_stand_diff <- function(a,b){
+  jj <- (a-b)/((a+b)/2)
+  standardized_diff <- (jj) / abs(max(abs(c(max(jj, na.rm = TRUE),
+                         min(jj, na.rm = TRUE))))) * 100
+  return(standardized_diff)
 }
 ```
 
-### 1. HIV+ all ages absolute differences
+### a) absch: w_both_014_tbtotal_nd - i_both_014_tbtotal_nd
+
 
 ```{r}
-x <- df
-x$val <- make_diff(a = df$i_both_all_htb_nd,
-          b = df$w_both_all_htb_nd,
-          absolute = TRUE)
-plotter(x)
+x <- df 
+x <- make_diff(data = x,
+               a = x$w_both_014_tbtotal_nd,
+               b = x$i_both_014_tbtotal_nd,
+               absolute = TRUE)
+plotter(x) +
+  labs(y = 'Number of deaths')
 ```
 
-### 2. HIV+ all ages standardized adjusted differences
-
-```{r}
-x <- df
-x$val <- make_diff(a = df$i_both_all_htb_nd,
-          b = df$w_both_all_htb_nd,
-          absolute = FALSE,
-          standardize = TRUE)
-plotter(x)
-```
-
-### 3. HIV- all ages absolute differences
-
-```{r}
-x <- df
-x$val <- make_diff(a = df$i_both_all_tb_nd - df$i_both_all_htb_nd,
-          b = df$w_both_all_tb_nd - df$w_both_all_htb_nd,
-          absolute = TRUE)
-plotter(x)
+```{r, results = 'asis'}
+make_table(x)
 ```
 
 
-### 4. HIV- all ages standardized adjusted differences
+#### standardized
 
 ```{r}
-x <- df
-x$val <- make_diff(a = df$i_both_all_tb_nd - df$i_both_all_htb_nd,
-          b = df$w_both_all_tb_nd - df$w_both_all_htb_nd,
-          absolute = FALSE,
-          standardize = TRUE)
-plotter(x)
+x <- df 
+x <- make_diff(data = x,
+  a = x$w_both_014_tbtotal_nd,
+               b = x$i_both_014_tbtotal_nd,
+               absolute = FALSE)
+plotter(x) +
+  labs(y = 'Standardized difference')
 ```
 
-### 5. Children absolute difference
-
-```{r}
-x <- df
-x$val <- make_diff(a = df$i_both_014_tb_nd,
-          b = df$w_both_014_tb_nd,
-          absolute = TRUE)
-plotter(x)
+```{r, results = 'asis'}
+make_table(x)
 ```
 
-### 6. Children standardized adjusted difference
+
+**Downloadable table with full data**
 
 ```{r}
-x <- df
-x$val <- make_diff(a = df$i_both_014_tb_nd,
-          b = df$w_both_014_tb_nd,
-          absolute = FALSE)
-plotter(x)
-```
-
-### 7. Adults standardized adjusted difference
-
-```{r}
-x <- df
-x$val <- make_diff(a = df$i_both_all_tb_nd - df$i_both_014_tb_nd,
-          b = df$w_both_all_tb_nd - df$w_both_014_tb_nd,
-          absolute = TRUE)
-plotter(x)
+make_pretty(x)
 ```
 
 
 
-### 8. Adults standardized adjusted difference
+### b) absad: (w_f_15plus_htb_nd + w_m_15plus_htb_nd + w_f_15plus_tb_nd + w_m_15plus_tb_nd) - ( i_both_15plus_tb_nd + i_both_15plus_htb_nd)
 
 ```{r}
-x <- df
-x$val <- make_diff(a = df$i_both_all_tb_nd - df$i_both_014_tb_nd,
-          b = df$w_both_all_tb_nd - df$w_both_014_tb_nd,
-          absolute = FALSE)
-plotter(x)
+x <- df 
+x <- make_diff(data = x,
+               a = (x$w_f_15plus_htb_nd + 
+                          x$w_m_15plus_htb_nd + 
+                          x$w_f_15plus_tb_nd + 
+                          x$w_m_15plus_tb_nd),
+               b = (x$i_both_15plus_tb_nd + x$i_both_15plus_htb_nd),
+               absolute = TRUE)
+plotter(x) +
+  labs(y = 'Number of deaths')
+```
+
+```{r, results = 'asis'}
+make_table(x)
 ```
 
 
+#### standardized
+
+```{r}
+x <- df 
+ x <- make_diff(data = x,
+                        a = (x$w_f_15plus_htb_nd + 
+                          x$w_m_15plus_htb_nd + 
+                          x$w_f_15plus_tb_nd + 
+                          x$w_m_15plus_tb_nd),
+               b = (x$i_both_15plus_tb_nd + x$i_both_15plus_htb_nd),
+               absolute = FALSE)
+plotter(x) +
+  labs(y = 'Standardized difference')
+```
+
+```{r, results = 'asis'}
+make_table(x)
+```
+
+**Downloadable table with full data**
+
+```{r}
+make_pretty(x)
+```
+
+
+
+### c) abshiv: w_both_all_htb_nd - i_both_all_htb_nd
+
+```{r}
+x <- df 
+x <- make_diff(data = x,
+               a = x$w_both_all_htb_nd,
+               b = x$i_both_all_htb_nd,
+               absolute = TRUE)
+plotter(x) +
+  labs(y = 'Number of deaths')
+```
+
+```{r, results = 'asis'}
+make_table(x)
+```
+
+
+#### standardized
+
+```{r}
+x <- df 
+x <- make_diff(data = x,
+               a = x$w_both_all_htb_nd,
+               b = x$i_both_all_htb_nd,
+               absolute = FALSE)
+plotter(x) +
+  labs(y = 'Standardized difference')
+```
+
+```{r, results = 'asis'}
+make_table(x)
+```
+
+**Downloadable table with full data**
+
+```{r}
+make_pretty(x)
+```
+
+
+### d) abstb: w_both_all_tb_nd - i_both_all_tb_nd
+
+```{r}
+x <- df 
+x <- make_diff(data = x,
+               a = x$w_both_all_tb_nd,
+               b = x$i_both_all_tb_nd,
+               absolute = TRUE)
+plotter(x) +
+  labs(y = 'Number of deaths')
+```
+
+```{r, results = 'asis'}
+make_table(x)
+```
+
+
+#### standardized
+
+
+```{r}
+x <- df 
+x <- make_diff(data = x,
+               a = x$w_both_all_tb_nd,
+               b = x$i_both_all_tb_nd,
+               absolute = FALSE)
+plotter(x) +
+  labs(y = 'Standardized difference')
+```
+
+```{r, results = 'asis'}
+make_table(x)
+```
+
+
+**Downloadable table with full data**
+
+```{r}
+make_pretty(x)
+```
+
+### e) absall: w_both_all_tbtotal_nd - i_both_all_tbtotal_nd
+
+```{r}
+x <- df 
+x <- make_diff(data = x,
+               a = x$w_both_all_tbtotal_nd,
+               b = x$i_both_all_tbtotal_nd,
+               absolute = TRUE)
+plotter(x) +
+  labs(y = 'Number of deaths')
+```
+
+```{r, results = 'asis'}
+make_table(x)
+```
+
+
+#### standardized
+
+```{r}
+x <- df 
+x <- make_diff(data = x,
+               a = x$w_both_all_tbtotal_nd,
+               b = x$i_both_all_tbtotal_nd,
+               absolute = FALSE)
+plotter(x) +
+  labs(y = 'Standardized difference')
+```
+
+```{r, results = 'asis'}
+make_table(x)
+```
+
+
+**Downloadable table with full data**
+
+```{r}
+make_pretty(x)
+```
+
+
+```{r}
+# Write csv with details
+x <- df %>%
+  mutate(absad_a = (w_f_15plus_htb_nd + w_m_15plus_htb_nd + w_f_15plus_tb_nd + w_m_15plus_tb_nd),
+         absad_b = (i_both_15plus_tb_nd + i_both_15plus_htb_nd)) %>%
+  dplyr::select(
+    w_both_014_tbtotal_nd,
+    i_both_014_tbtotal_nd,
+    absad_a,
+    absad_b,
+    w_both_all_htb_nd,
+    i_both_all_htb_nd,
+    w_both_all_tb_nd,
+    i_both_all_tb_nd,
+    w_both_all_tbtotal_nd, 
+    i_both_all_tbtotal_nd) 
+x$any0 <- apply(x, 1, function(z){any(is.na(z)|z == 0)})
+x <- cbind(data.frame(country = df$country),
+           x)  
+write_csv(x, 'countries.csv')
+# cat(paste0(sort(unique(x$country[x$any0])), collapse = '\n'))
+y <- x %>%
+  dplyr::select(-any0) %>%
+  summarise_all(.funs = function(z){paste0(sort(unique(df$country[(which(is.na(z) | z == 0))])), collapse = ';')})
+write_csv(y, 'missings.csv')
+
+```
+
+# Big table for appendix
+
+```{r}
+x <- df %>%
+  # A
+  mutate(`absolute difference for all tb all ages` = w_both_all_tbtotal_nd - i_both_all_tbtotal_nd) %>%
+  # B
+  mutate(`standardized difference for all tb all ages` = make_stand_diff( w_both_all_tbtotal_nd, i_both_all_tbtotal_nd)) %>%
+  # C
+  mutate(`absolute difference for children` = w_both_014_tbtotal_nd - i_both_014_tbtotal_nd) %>%
+  # D
+  mutate(`standardized difference for children` = make_stand_diff(w_both_014_tbtotal_nd, i_both_014_tbtotal_nd)) %>%
+  # E
+  mutate(`absolute difference for adults` = (w_f_15plus_htb_nd + w_m_15plus_htb_nd + w_f_15plus_tb_nd + w_m_15plus_tb_nd) - ( i_both_15plus_tb_nd + i_both_15plus_htb_nd)) %>%
+  # F 
+  mutate(`standardized difference for adults` = make_stand_diff(
+    a = (w_f_15plus_htb_nd + w_m_15plus_htb_nd + w_f_15plus_tb_nd + w_m_15plus_tb_nd),
+    b =  ( i_both_15plus_tb_nd + i_both_15plus_htb_nd)
+  )) %>%
+  # G
+  mutate(`absolute difference for hiv tb` = w_both_all_htb_nd - i_both_all_htb_nd ) %>%
+  # H
+  mutate(`standardized difference for hiv tb` = make_stand_diff(w_both_all_htb_nd , i_both_all_htb_nd )) %>%
+  # I
+  mutate(`absolute difference for only tb` = w_both_all_tb_nd - i_both_all_tb_nd) %>%
+  # J
+  mutate(`standardized difference for only tb` = make_stand_diff(w_both_all_tb_nd, i_both_all_tb_nd))
+x <- x[,grepl('standardized difference|absolute difference|country', names(x))]
+x <- x %>% arrange(country) %>%
+  dplyr::select(-country_number)
+prettify(x, nrows = nrow(x), download_options = TRUE)
+```
