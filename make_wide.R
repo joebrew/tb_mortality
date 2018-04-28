@@ -513,10 +513,57 @@ df$prevsurvey[df$country %in%
 
 # Create an IHME cdr variable
 df$cdr_ihme <- 
-  (df$c_newinc + df$ret_nrel) / 
+  (df$c_newinc #+ 
+     # df$ret_nrel
+   ) / 
   df$ihme_incidence_both_allages_totaltb_number   * 100
+
+df$cdr_ihme[df$cdr_ihme > 100] <- 100
+
+df$gb_cfr <- as.numeric(as.character(df$gb_cfr))
 
 
 # Write csv
 write_csv(df, 'data/combined_data.csv')
+
+
+# Make a region specific data frame
+df_region <- df %>%
+  group_by(who_region) %>%
+  summarise(population = sum(gb_e_pop_num, na.rm = TRUE),
+            i_both_all_htb_nd = weighted.mean(i_both_all_htb_nd,
+                                              w = gb_e_pop_num,
+                                              na.rm = TRUE),
+            i_both_all_tb_nd = weighted.mean(i_both_all_tb_nd,
+                                             w = gb_e_pop_num,
+                                             na.rm = TRUE),
+            i_both_all_tbtotal_nd = weighted.mean(i_both_all_tbtotal_nd,
+                                                  w = gb_e_pop_num,
+                                                  na.rm = TRUE),
+            w_both_all_htb_nd = weighted.mean(w_both_all_htb_nd,
+                                              w = gb_e_pop_num,
+                                              na.rm = TRUE),
+            w_both_all_tb_nd = weighted.mean(w_both_all_tb_nd,
+                                             w = gb_e_pop_num,
+                                             na.rm = TRUE),
+            w_both_all_tbtotal_nd = weighted.mean(w_both_all_tbtotal_nd,
+                                                  w = gb_e_pop_num,
+                                                  na.rm = TRUE),
+            case_fatality_rate_2015_adjusted = 
+              weighted.mean(case_fatality_rate_2015_adjusted,
+                            w = gb_e_pop_num,
+                            na.rm = TRUE),
+            relative_difference = 
+              weighted.mean(relative_difference,
+                            w = gb_e_pop_num,
+                            na.rm = TRUE),
+            # i_over_w = weighted.mean(i_over_w,
+            #                          w = gb_e_pop_num,
+            #                          na.rm = TRUE),
+            # w_over_i = weighted.mean(w_over_i,
+            #                          w = gb_e_pop_num,
+            #                          na.rm = TRUE),
+            stand_dif = weighted.mean(stand_dif,
+                                      w = gb_e_pop_num,
+                                      na.rm = TRUE))
 
