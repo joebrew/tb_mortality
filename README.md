@@ -8,7 +8,7 @@
 3. From within the R console, "knit" the rmarkdown file for miscellaneous visualizations, notes, and statistical tests:
 
 ```
-rmarkdown::render('visualizations_for_publication.Rmd')
+rmarkdown::render('visualizations.Rmd')
 ```
 
 

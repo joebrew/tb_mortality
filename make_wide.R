@@ -523,8 +523,23 @@ df$cdr_ihme[df$cdr_ihme > 100] <- 100
 df$gb_cfr <- as.numeric(as.character(df$gb_cfr))
 
 
-# Write csv
-write_csv(df, 'data/combined_data.csv')
+# Write a csv of the complete dataset
+write_csv(df %>%
+            dplyr::select(case_fatality_rate_2012_to_2014_new,
+                          case_fatality_rate_2014_new,
+                          case_fatality_rate_2015_new,
+                          case_fatality_rate_2015_adjusted,
+                          estimated_fatalities_2015,
+                          estimated_fatalities_2015_using_2012_to_2014_data,
+                          stand_w,
+                          stand_i,
+                          w_over_i,
+                          w_minus_i,
+                          i_minus_w,
+                          i_cases_over_deaths,
+                          w_cases_over_deaths,
+                          reported_mdr)
+            , 'data/combined_data.csv')
 
 
 # Make a region specific data frame
@@ -566,4 +581,17 @@ df_region <- df %>%
             stand_dif = weighted.mean(stand_dif,
                                       w = gb_e_pop_num,
                                       na.rm = TRUE))
+
+# Create an html table of our data
+xdf <- databrew::prettify(df %>% arrange(country),
+                          download_options = TRUE,
+                          nrows = nrow(df),
+                          remove_underscores_columns = FALSE,
+                          cap_columns = FALSE,
+                          cap_characters = FALSE,
+                          comma_numbers = FALSE,
+                          date_format = '%Y-%m-%d',
+                          round_digits = 2)
+htmlwidgets::saveWidget(widget = xdf,
+                        file = 'data_widget.html')
 
