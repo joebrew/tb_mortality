@@ -524,22 +524,23 @@ df$gb_cfr <- as.numeric(as.character(df$gb_cfr))
 
 
 # Write a csv of the complete dataset
-write_csv(df %>%
-            dplyr::select(case_fatality_rate_2012_to_2014_new,
-                          case_fatality_rate_2014_new,
-                          case_fatality_rate_2015_new,
-                          case_fatality_rate_2015_adjusted,
-                          estimated_fatalities_2015,
-                          estimated_fatalities_2015_using_2012_to_2014_data,
-                          stand_w,
-                          stand_i,
-                          w_over_i,
-                          w_minus_i,
-                          i_minus_w,
-                          i_cases_over_deaths,
-                          w_cases_over_deaths,
-                          reported_mdr)
-            , 'data/combined_data.csv')
+x <- df %>%
+  dplyr::select(-case_fatality_rate_2012_to_2014_new,
+                -case_fatality_rate_2014_new,
+                -case_fatality_rate_2015_new,
+                -case_fatality_rate_2015_adjusted,
+                -estimated_fatalities_2015,
+                -estimated_fatalities_2015_using_2012_to_2014_data,
+                -stand_w,
+                -stand_i,
+                -w_over_i,
+                -w_minus_i,
+                -i_minus_w,
+                -i_cases_over_deaths,
+                -w_cases_over_deaths,
+                -reported_mdr)
+x <- x[,!grepl('stand', names(x))]
+write_csv(x, 'data/combined_data.csv')
 
 
 # Make a region specific data frame
