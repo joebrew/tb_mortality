@@ -48,7 +48,7 @@ There are 4 direct data sources used for this project:
 Additionally, for visualizations, an ESRI-format global administrative boundaries shapefile is used:
     - `shp/world/ne_110m_admin_0_countries.shp`
 
-This wasretrieved from the "Natural Earth" database, administrative level 0, country boundaries: http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/110m/cultural/ne_110m_admin_0_countries.zip
+This was retrieved from the "Natural Earth" database, administrative level 0, country boundaries: http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/110m/cultural/ne_110m_admin_0_countries.zip
 
 ### Combining data
 
@@ -56,7 +56,7 @@ To combine the different direct sources into one "wide" dataset, run `make_wide.
 
 ### Reproducing charts, tables, and statistics
 
-The `visualizations_for_publication.Rmd` file contains the code for different charts, tables, and statistical tests used for the article. It also includes many items _not_ used for the article (ie, exploratory analysis, "sanity checks", etc.).
+The `visualizations.Rmd` file contains the code for different charts, tables, and statistical tests used for the article. It also includes many items _not_ used for the article (ie, exploratory analysis, "sanity checks", etc.).
 
 ## Questions
 
