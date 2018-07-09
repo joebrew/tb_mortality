@@ -538,8 +538,15 @@ x <- df %>%
                 -i_minus_w,
                 -i_cases_over_deaths,
                 -w_cases_over_deaths,
-                -reported_mdr)
-x <- x[,!grepl('stand', names(x))]
+                -reported_mdr,
+                -original_stand_dif_child,
+                -original_stand_dif_child_h,
+                -stand_dif_child_sqrt_directional,
+                -stand_dif_sqrt_directional,
+                -stand_h_i,
+                -stand_i,
+                -stand_w,
+                -stand_dif_inc)
 write_csv(x, 'data/combined_data.csv')
 
 
