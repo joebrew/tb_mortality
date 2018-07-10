@@ -547,6 +547,7 @@ x <- df %>%
                 -stand_i,
                 -stand_w,
                 -stand_dif_inc)
+x <- x[,!grepl('case_fatality', names(x))]
 write_csv(x, 'data/combined_data.csv')
 
 
