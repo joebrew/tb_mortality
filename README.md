@@ -5,12 +5,6 @@
 
 1. Clone this repository: `git clone https://github.com/joebrew/tb_mortality`
 2. Run `make_wide.R` which calls each of the `format_<source name>.R` scripts and generates `data/prepared_data.R` as well as `data/combined_data.csv`: `Rscript make_wide.R`
-3. From within the R console, "knit" the rmarkdown file for miscellaneous visualizations, notes, and statistical tests:
-
-```
-rmarkdown::render('visualizations.Rmd')
-```
-
 
 
 ## Details
@@ -54,9 +48,6 @@ This was retrieved from the "Natural Earth" database, administrative level 0, co
 
 To combine the different direct sources into one "wide" dataset, run `make_wide.R`. This generates `combined_data.csv` the main dataset used for the entire analysis.
 
-### Reproducing charts, tables, and statistics
-
-The `visualizations.Rmd` file contains the code for different charts, tables, and statistical tests used for the article. It also includes many items _not_ used for the article (ie, exploratory analysis, "sanity checks", etc.).
 
 ## Questions
 
