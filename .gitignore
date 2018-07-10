@@ -1,4 +1,5 @@
 *.html
 *.RData
 *.png
-figures/
+figures/*
+/figures
