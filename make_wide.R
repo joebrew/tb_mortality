@@ -604,3 +604,4 @@ xdf <- databrew::prettify(df %>% arrange(country),
 htmlwidgets::saveWidget(widget = xdf,
                         file = 'data_widget.html')
 
+
