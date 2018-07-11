@@ -604,4 +604,125 @@ xdf <- databrew::prettify(df %>% arrange(country),
 htmlwidgets::saveWidget(widget = xdf,
                         file = 'data_widget.html')
 
+# Define functionality for estimating 95% confidence intervals and plotting/tabulating them
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+stand_dif_compare <- function(y = df$gb_c_cdr,
+                              yl = NULL,
+                              x = NULL){
+  if(is.null(yl)){
+    stop('Provide a label')
+  }
+  
+  if(is.null(x)){
+    x <- df$stand_dif
+  }
+  not_na <- !is.na(x) & !is.na(y) & is.finite(x) & is.finite(y)
+  ct <- cor.test(x[not_na],y[not_na], method = "pearson", conf.level = 0.95)
+  
+  data <- data.frame(x,y, z = df$gb_e_pop_num)
+  cc <- paste0('Correlation coefficient: ', round(cor(x[not_na],y[not_na], use = 'complete.obs'), digits = 3), ', 95% CI: ', 
+               round(ct$conf.int[1], digits = 3),
+               ' to ',
+               round(ct$conf.int[2], digits = 3))
+  ggplot(data = data,
+         aes(x = x,
+             y = y#,
+             # size = z / 1000000
+         )) +
+    geom_point(color = 'darkorange',alpha = 0.6) +
+    geom_smooth(method = 'lm', se = FALSE) +
+    theme_bw() +
+    labs(x = 'Standardized difference',
+         y = yl,
+         subtitle = cc,
+         title = paste0('Association of standardized difference and ', yl)) #+
+  # scale_size_continuous(name = 'Population\n(millions)')
+}
+
+### Standardized difference with CDR WHO
+stand_dif_compare(y = df$gb_c_cdr, yl = 'CDR WHO')
+
+### Standardized difference with CDR GBD
+stand_dif_compare(y = df$cdr_ihme, yl = 'CDR GBD')
+
+### Standardized difference with CFR
+# (using variable `case_fatality_rate_2015_adjusted`)
+stand_dif_compare(y = df$case_fatality_rate_2015_adjusted, yl = 'CFR')
+
+### Standardized difference with CFR
+# (using variable `gb_cfr`)
+stand_dif_compare(y = df$gb_cfr, yl = 'CFR')
+
+### Standardized difference with Reported HIV prevalence
+stand_dif_compare(y = df$p_hiv_of_tb, yl = 'Reported HIV prevalence')
+
+### Standardized difference with MDR prevalence 
+# (using `reported_mdr`)
+stand_dif_compare(y = df$reported_mdr, yl = 'MDR prevalence ')
+
+### Standardized difference with MDR prevalence 
+# (using `p_mdr_new`)
+
+# stand_dif_compare(y = df$p_mdr_new, yl = 'MDR prevalence ')
+
+## Correlations with  `original_stand_diff`
+### CDR WHO 
+stand_dif_compare(x = df$original_stand_dif, 
+                  y = df$gb_c_cdr,
+                  yl = 'CDR WHO')
+
+
+### CDR GBD 
+stand_dif_compare(x = df$original_stand_dif, 
+                  y = df$cdr_ihme,
+                  yl = 'CDR GBD')
+
+### HIV prevalence 
+stand_dif_compare(x = df$original_stand_dif, 
+                  y = df$p_hiv_of,
+                  yl = 'HIV prevalence')
+
+### MDR prevalence 
+stand_dif_compare(x = df$original_stand_dif, 
+                  y = df$p_mdr_new,
+                  yl = 'MDR prevalence')
+
+
+## Box plot of association of prevalence survey with stand diff (not original_stand_dif)
+ggplot(data = df %>%
+         mutate(prevsurvey = ifelse(prevsurvey == 0, 'No prevalence survey', 'Prevalence survey')),
+       aes(x= factor(prevsurvey),
+           y = stand_dif,
+           group = prevsurvey)) +
+  geom_boxplot() +
+  labs(x = 'Prevalence survey',
+       y = 'Standardized difference') +
+  theme_bw()
+
+# Difference using t-test (for p-value)
+t.test(df$stand_dif[df$prevsurvey == 0],
+       df$stand_dif[df$prevsurvey == 1])
+
+## Plot of prev_survey and original_stand_dif
+ggplot(data = df %>%
+         mutate(prevsurvey = ifelse(prevsurvey == 0, 'No prevalence survey', 'Prevalence survey')),
+       aes(x= factor(prevsurvey),
+           y = original_stand_dif,
+           group = prevsurvey)) +
+  geom_boxplot() +
+  labs(x = 'Prevalence survey',
+       y = 'Standardized difference') +
+  theme_bw()
+
+
+# Difference using t-test (for p-value) 
+x <- df %>%
+  filter(!is.na(prevsurvey) &
+           !is.infinite(prevsurvey) &
+           !is.na(original_stand_dif) &
+           !is.infinite(original_stand_dif))
+t.test(x$original_stand_dif[x$prevsurvey == 0],
+       x$original_stand_dif[x$prevsurvey == 1])
 
